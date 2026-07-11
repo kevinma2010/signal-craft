@@ -94,6 +94,7 @@ signal-craft/
 ├── SECURITY.md
 ├── PROJECT_POLICY.md
 ├── FILE_MANIFEST.md
+├── CLAUDE.md
 ├── PROMPTS.md
 ├── EXAMPLES.md
 └── docs/

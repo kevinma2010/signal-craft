@@ -1,5 +1,6 @@
 # File Manifest
 
+- `CLAUDE.md`
 - `CODE_OF_CONDUCT.md`
 - `CONTRIBUTING.md`
 - `EXAMPLES.md`
