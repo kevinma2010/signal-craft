@@ -35,14 +35,15 @@ User data lives outside the skill directory so skill updates never touch it.
 
 ## Connector Scripts
 
-One script per source category, under `scripts/`:
+Connectors are TypeScript scripts run with Bun, one per source category,
+under `scripts/`:
 
 | Script | Category | Method |
 |---|---|---|
-| `fetch_rss.py` | Blogs, changelogs, podcasts | RSS/Atom via feed parsing |
-| `fetch_github.py` | Releases, maintainer discussions | GitHub public REST API |
-| `fetch_youtube.py` | Channels and videos | Channel RSS for discovery; yt-dlp for metadata and subtitles |
-| `fetch_x.py` | X posts and topic discovery | Grok API live search over X content and topics |
+| `fetch-rss.ts` | Blogs, changelogs, podcasts | RSS/Atom via feed parsing |
+| `fetch-github.ts` | Releases, maintainer discussions | GitHub public REST API |
+| `fetch-youtube.ts` | Channels and videos | Channel RSS for discovery; yt-dlp for metadata and subtitles |
+| `fetch-x.ts` | X posts and topic discovery | Grok API live search over X content and topics |
 
 Shared helpers live in `scripts/lib/` (normalization, seen-set handling,
 config loading).
@@ -52,9 +53,9 @@ config loading).
 Every connector follows the same contract:
 
 ```text
-fetch_<category>.py --config ~/.signalcraft/sources.yaml \
-                    --since <ISO8601> \
-                    --out ~/.signalcraft/inbox/<category>.jsonl
+bun scripts/fetch-<category>.ts --config ~/.signalcraft/sources.yaml \
+                                --since <ISO8601> \
+                                --out ~/.signalcraft/inbox/<category>.jsonl
 ```
 
 - Fetch only items newer than `--since`, skipping ids already in `seen.jsonl`.
@@ -99,12 +100,13 @@ budget (max episodes per run) and an opt-out.
 
 ## X Collection via Grok
 
-`fetch_x.py` uses the Grok API's live search capability, which can search X
+`fetch-x.ts` uses the Grok API's live search capability, which can search X
 posts and topics broadly without scraping:
 
 - Input: followed handles and tracked topics from `sources.yaml`.
 - The script asks Grok for recent relevant posts as structured JSON with
   post URLs, authors, timestamps, and text.
+- `fetch-x.ts` calls the xAI API over HTTPS with `XAI_API_KEY`.
 - Output goes through the same normalized schema; post URLs are preserved as
   evidence links.
 
@@ -117,18 +119,20 @@ Read from environment variables only; never stored in config files or logs:
 
 | Variable | Used by | Required |
 |---|---|---|
-| `XAI_API_KEY` | `fetch_x.py` | Only for X collection |
+| `XAI_API_KEY` | `fetch-x.ts` | Only for X collection |
 | `DEEPGRAM_API_KEY` | transcription fallback | Only when native transcripts are missing |
-| `GITHUB_TOKEN` | `fetch_github.py` | Optional, raises rate limits |
+| `GITHUB_TOKEN` | `fetch-github.ts` | Optional, raises rate limits |
 
 Every connector degrades gracefully: a missing key disables that capability
 with a clear notice instead of failing the run.
 
 ## Dependencies
 
-- Python 3.11+ for connector scripts
-- `feedparser`, `requests`, `pyyaml`
-- `yt-dlp` for YouTube metadata, subtitles, and audio extraction
+- Bun 1.x runs the TypeScript connector scripts directly; HTTP uses the
+  built-in `fetch`
+- npm packages: `yaml` for config parsing, `fast-xml-parser` for RSS/Atom
+- `yt-dlp` as an external binary for YouTube metadata, subtitles, and audio
+  extraction
 - No database; state is JSONL and YAML files
 
 ## Execution Flow
