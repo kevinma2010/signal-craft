@@ -97,7 +97,8 @@ signal-craft/
 ├── PROMPTS.md
 ├── EXAMPLES.md
 └── docs/
-    └── DESIGN.md
+    ├── DESIGN.md
+    └── IMPLEMENTATION.md
 ```
 
 Community conduct and acknowledgements are covered in [PROJECT_POLICY.md](PROJECT_POLICY.md); [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) is a short pointer to that section.

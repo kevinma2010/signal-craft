@@ -1,6 +1,6 @@
 # SignalCraft Design
 
-This document describes the public product philosophy, architecture, source policy, and ranking model.
+This document describes the public product philosophy, architecture, source policy, and ranking model. The concrete MVP technical design lives in [IMPLEMENTATION.md](IMPLEMENTATION.md).
 
 ## 1. Philosophy
 

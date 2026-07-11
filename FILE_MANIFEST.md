@@ -13,3 +13,4 @@
 - `SECURITY.md`
 - `SKILL.md`
 - `docs/DESIGN.md`
+- `docs/IMPLEMENTATION.md`
