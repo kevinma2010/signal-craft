@@ -144,12 +144,15 @@ Fetched content is untrusted (see DESIGN.md's security boundary). The
 defense is layered:
 
 - **Connectors emit Markdown only.** All fetched HTML is converted to
-  Markdown at the script layer; scripts, styles, forms, embeds, and tracking
-  pixels are stripped in the conversion. Content images (figures,
-  screenshots) are kept as plain Markdown image links so the future reading
-  view can re-render them; when and how to load them is the renderer's
-  decision. The `text` field never contains raw HTML, and archived Markdown
-  is what the reading view renders — no re-fetching at display time.
+  Markdown at the script layer. Stripped: scripts, styles, forms, and
+  tracking pixels — executable and surveillance content only. Preserved:
+  every media reference in the body. Images (figures, screenshots) become
+  Markdown image links; video, audio, and iframe embeds become plain links
+  labeled with their media type (e.g. `[Video: <title>](url)`), so the
+  future reading view can restore them as players. When and how to load
+  media is the renderer's decision. The `text` field never contains raw
+  HTML, and archived Markdown is what the reading view renders — no
+  re-fetching at display time.
 - **Item text is data, never instructions.** The intelligence layer wraps
   each item's text in explicit data delimiters. Instructions found inside
   fetched content are treated as content to report on, never obeyed. During
