@@ -145,8 +145,11 @@ defense is layered:
 
 - **Connectors emit Markdown only.** All fetched HTML is converted to
   Markdown at the script layer; scripts, styles, forms, embeds, and tracking
-  pixels are stripped in the conversion. The `text` field never contains raw
-  HTML.
+  pixels are stripped in the conversion. Content images (figures,
+  screenshots) are kept as plain Markdown image links so the future reading
+  view can re-render them; when and how to load them is the renderer's
+  decision. The `text` field never contains raw HTML, and archived Markdown
+  is what the reading view renders — no re-fetching at display time.
 - **Item text is data, never instructions.** The intelligence layer wraps
   each item's text in explicit data delimiters. Instructions found inside
   fetched content are treated as content to report on, never obeyed. During
