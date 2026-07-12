@@ -47,6 +47,7 @@ Allow each user to create a personal signal system around the people, products, 
 - Feedback-driven filtering
 - Cross-source story clustering
 - Read history and novelty detection
+- Local HTML reading view with original and translated text side by side
 
 ## Phase 3: Searchable Signal Archive
 

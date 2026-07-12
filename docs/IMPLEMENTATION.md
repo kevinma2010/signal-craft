@@ -226,6 +226,28 @@ budget and an opt-out. Default: transcription is enabled when
 `DEEPGRAM_API_KEY` is present, capped at **10 items per run**; items beyond
 the budget fall back to title, description, and show notes only.
 
+## Translation
+
+The digest narrative is always written in the user's language by the host
+agent (language rules live in PROMPTS.md). Separately, **full-text
+translation** powers the original/translated side-by-side reading in the
+planned local reading view. That is bulk mechanical work, so it is offloaded
+to the DeepSeek API — far cheaper than host-agent tokens:
+
+- Scope: only items selected into a briefing are translated; ranked-out
+  items cost nothing. Archived items without a translation are translated on
+  demand when opened in the reading view.
+- Translations are cached in `cache/translations/` keyed by item id and
+  target language; they are immutable and produced at most once.
+- Without `DEEPSEEK_API_KEY`, full-text translation is skipped and the
+  reading view shows originals only.
+- Only fetched public content is ever sent to DeepSeek; user preferences,
+  feedback, and reading history never leave the machine.
+
+Pre-summarization deliberately stays in-session with the host agent:
+summary quality directly drives ranking and briefing quality, so it is a
+core intelligence task, not mechanical work to outsource.
+
 ## X Collection via Grok Build
 
 `fetch-x.ts` shells out to the **Grok Build CLI** (xAI's agentic
@@ -253,6 +275,7 @@ files or logs:
 | Variable | Used by | Required |
 |---|---|---|
 | `DEEPGRAM_API_KEY` | transcription fallback | Only when native transcripts are missing |
+| `DEEPSEEK_API_KEY` | full-text translation | Only for bilingual reading |
 | `GITHUB_TOKEN` | `fetch-github.ts` | Optional, raises rate limits |
 
 X collection needs no API key: it relies on the Grok Build CLI's own local
