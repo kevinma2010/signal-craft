@@ -15,7 +15,20 @@ description: AI intelligence agent for tracking builders, primary sources, offic
 6. Cluster related stories.
 7. Generate an evidence-backed briefing.
 8. Include original links.
-9. Collect feedback for future personalization.
+9. Collect feedback and apply it to the next briefing.
+
+## Interaction
+
+Users interact in natural language ("give me today's briefing", "follow the
+topic of coding agents", "less fundraising news"). In addition, these
+conventional subcommands are recognized as shortcuts for the same intents:
+
+```text
+digest [daily|weekly]     Generate a briefing now
+sources list|add|remove   Manage subscribed sources
+topics follow|unfollow    Manage tracked topics
+feedback <note>           Record a preference
+```
 
 ## First Run
 
@@ -44,3 +57,5 @@ Every significant claim should include an original source URL and, when availabl
 ## Feedback
 
 Support feedback such as more like this, less like this, ignore this source, follow this topic, prioritize technical depth, or show only official sources.
+
+Feedback takes effect immediately: recent feedback events are applied as soft ranking preferences in the very next briefing, and accumulate for long-term personalization.

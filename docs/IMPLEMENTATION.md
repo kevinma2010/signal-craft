@@ -22,7 +22,8 @@ Everything runs on the user's machine. There is no central service.
 ~/.signalcraft/
 ├── config.yaml        # preferences: frequency, language, depth, interests, delivery
 ├── sources.yaml       # subscribed sources: type, URL/handle, weight
-├── seen.jsonl         # processed item fingerprints (id, url, first_seen)
+├── state.json         # last successful run timestamp per source category
+├── seen.jsonl         # processed item fingerprints (id, normalized url, first_seen)
 ├── feedback.jsonl     # user feedback events
 ├── inbox/             # normalized items written by connector scripts
 │   └── <category>.jsonl
@@ -63,6 +64,26 @@ bun scripts/fetch-<category>.ts --config ~/.signalcraft/sources.yaml \
 - Never write secrets to output or logs.
 - Exit non-zero on total failure; partial source failures are reported on
   stderr and do not abort the run.
+
+`--since` is the category's last successful run from `state.json`, so a
+briefing always covers the gap since the previous one — no items are lost
+when the user skips days. Lookback is capped at 30 days. A connector's
+timestamp advances only when it succeeds, so a failed category re-covers
+its own gap on the next run. First run defaults to the digest frequency
+window (1 day for daily, 7 for weekly).
+
+### Deduplication and Clustering
+
+Deduplication is split across the two layers:
+
+- **Scripts: URL-level, deterministic.** Normalize the URL (strip tracking
+  parameters, unify hosts), fingerprint it, and skip anything already in
+  `seen.jsonl`.
+- **Claude: semantic, in context.** Cross-source story clustering — multiple
+  items covering the same event — is judged by Claude during briefing
+  generation, per the story-cluster rules in DESIGN.md. The MVP deliberately
+  uses no embeddings; if item volume outgrows the context window, embedding
+  pre-clustering is a Phase 2 optimization.
 
 ### Normalized Item Schema
 
@@ -155,10 +176,16 @@ software silently, and declining only disables that source category.
 When the user requests a briefing, the skill:
 
 1. Loads `config.yaml` and `sources.yaml` (first run: conversational setup).
-2. Runs the connector scripts for the user's enabled categories.
-3. Reads `inbox/*.jsonl`, applies ranking, clustering, and digest prompts.
+2. Runs the connector scripts for the user's enabled categories, passing
+   each category's `--since` from `state.json`.
+3. Reads `inbox/*.jsonl` and recent entries from `feedback.jsonl`, then
+   applies ranking, clustering, and digest prompts. Feedback is consumed
+   immediately: recent feedback events are injected into the ranking prompt
+   as soft preferences, so "less like this" takes effect on the very next
+   briefing.
 4. Writes the briefing to `digests/YYYY-MM-DD.md` and presents it.
-5. Appends processed ids to `seen.jsonl` and records any feedback.
+5. Appends processed ids to `seen.jsonl`, advances `state.json`, and records
+   any new feedback.
 
 Scheduling is out of scope for the MVP; runs are user-triggered.
 
@@ -166,5 +193,4 @@ Scheduling is out of scope for the MVP; runs are user-triggered.
 
 - Default source pack: a curated starter list of high-quality,
   primarily English-language sources.
-- Story-cluster fingerprinting details (semantic dedup across sources).
 - Delivery beyond local file and terminal (email, messaging) — later phase.
