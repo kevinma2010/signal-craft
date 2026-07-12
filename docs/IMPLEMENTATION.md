@@ -96,7 +96,9 @@ Applies to YouTube videos and podcast episodes:
    `cache/transcripts/` keyed by item id so no audio is ever transcribed twice.
 
 Deepgram calls cost money, so `config.yaml` supports a per-run transcription
-budget (max episodes per run) and an opt-out.
+budget and an opt-out. Default: transcription is enabled when
+`DEEPGRAM_API_KEY` is present, capped at **10 items per run**; items beyond
+the budget fall back to title, description, and show notes only.
 
 ## X Collection via Grok Build
 
@@ -144,6 +146,10 @@ failing the run.
 - Grok Build CLI as an external binary for X collection and topic discovery
 - No database; state is JSONL and YAML files
 
+When an external binary is missing, the skill shows the install command,
+asks for consent, and installs it on the user's approval. It never installs
+software silently, and declining only disables that source category.
+
 ## Execution Flow
 
 When the user requests a briefing, the skill:
@@ -158,6 +164,7 @@ Scheduling is out of scope for the MVP; runs are user-triggered.
 
 ## Open Items
 
-- Default source pack: a curated starter list of high-quality sources.
+- Default source pack: a curated starter list of high-quality,
+  primarily English-language sources.
 - Story-cluster fingerprinting details (semantic dedup across sources).
 - Delivery beyond local file and terminal (email, messaging) — later phase.
