@@ -57,6 +57,14 @@ and failed, new item count, and how many items were transcribed. A failed
 source must be visible so the user never mistakes a gap in coverage for a
 quiet day.
 
+Depth levels, set in preferences and adjustable per request:
+
+- **brief** — only the top five What Changed items, two or three sentences
+  each; fits one screen.
+- **standard** (default) — the full section structure above.
+- **deep** — standard, plus expanded evidence, material disagreements, and
+  the update timeline for each story cluster.
+
 ## Topic Tracking
 
 Users may request topics in natural language. Expand each topic into related people, products, companies, repositories, terminology, and adjacent subtopics.

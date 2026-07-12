@@ -39,10 +39,13 @@ conversational prompts; never depend on host-specific tools for core flow.
 ├── signalcraft.lock   # transient run lock (pid + started_at)
 ├── seen.jsonl         # processed item fingerprints (id, normalized url, first_seen)
 ├── feedback.jsonl     # user feedback events
-├── inbox/             # normalized items written by connector scripts
+├── inbox/             # per-run staging written by connector scripts
 │   └── <category>.jsonl
+├── items/             # permanent archive of all processed items
+│   └── YYYY-MM.jsonl
 ├── cache/
-│   └── transcripts/   # cached transcripts keyed by item id
+│   ├── transcripts/   # transcripts and pre-summaries, keyed by item id
+│   └── translations/  # full-text translations, keyed by item id + language
 └── digests/           # generated briefings, YYYY-MM-DD.md
 ```
 
@@ -56,6 +59,37 @@ The curated default source pack ships in the repository as
 weight overrides. Connectors merge the two at load time, so pack
 improvements reach existing users automatically while user intent is never
 overwritten.
+
+### Data Lifecycle
+
+All content data persists locally — it feeds the future local reading view
+and the Phase 3 searchable archive. Retention is per type:
+
+- `inbox/` — per-run staging only. After a successful run, processed items
+  are appended to the `items/` archive; the staging area is cleared at the
+  start of the next run.
+- `items/` — permanent. Monthly JSONL files holding every processed item in
+  full (original text included).
+- `seen.jsonl` — pruned: fingerprints older than 90 days are dropped (the
+  fetch lookback cap is 30 days, so older fingerprints can never match).
+- `cache/` (transcripts, pre-summaries, translations) — permanent. These
+  cost money or tokens to produce and are immutable; never regenerate them.
+- `digests/` — permanent.
+
+### State Versioning
+
+Every state and config file carries a `version` field. When a newer skill
+loads an older file, it migrates the file in place after writing a backup
+next to it. Migration logic lives in `scripts/lib/` and is covered by tests.
+
+### Source Health
+
+`state.json` tracks a consecutive-failure count per source, reset on
+success. At 3 or more consecutive failures, the Run Report escalates from a
+one-line mention to a recommendation to disable the source; one user
+confirmation writes the disable into the `sources.yaml` overlay. Sources are
+never disabled automatically — transient outages must not silently shrink
+coverage.
 
 ### Concurrency
 
@@ -259,8 +293,8 @@ When the user requests a briefing, the skill:
 5. Writes the briefing to `digests/YYYY-MM-DD.md` and presents it. The
    briefing ends with a short Run Report footer: sources succeeded and
    failed, new item count, and transcription count.
-6. Appends processed ids to `seen.jsonl`, advances `state.json`, and records
-   any new feedback.
+6. Archives processed items into `items/`, appends their ids to
+   `seen.jsonl`, advances `state.json`, and records any new feedback.
 
 Scheduling is out of scope for the MVP; runs are user-triggered. When the
 skill is invoked without a specific request, it asks the user what to do
