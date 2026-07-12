@@ -37,6 +37,7 @@ Each document has a single owner-topic; content is deliberately not duplicated:
 
 - `docs/DESIGN.md` — product philosophy, source policy, ranking model
 - `docs/IMPLEMENTATION.md` — MVP technical design (scripts, schema, credentials)
+- `docs/TASKS.md` — sequenced MVP task plan with dependencies; update task status there as work lands
 - `SKILL.md` — the skill's runtime responsibilities and output format
 - `PROMPTS.md` — prompt templates for digest/social/podcast/official-update summarization
 - `PROJECT_POLICY.md` — governance, community conduct, privacy, acknowledgements, trademark; `CODE_OF_CONDUCT.md` is only a thin pointer to it

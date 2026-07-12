@@ -15,3 +15,4 @@
 - `SKILL.md`
 - `docs/DESIGN.md`
 - `docs/IMPLEMENTATION.md`
+- `docs/TASKS.md`
