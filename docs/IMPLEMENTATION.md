@@ -85,6 +85,21 @@ timestamp advances only when it succeeds, so a failed category re-covers
 its own gap on the next run. First run defaults to the digest frequency
 window (1 day for daily, 7 for weekly).
 
+### Content Sanitization
+
+Fetched content is untrusted (see DESIGN.md's security boundary). The
+defense is layered:
+
+- **Connectors emit Markdown only.** All fetched HTML is converted to
+  Markdown at the script layer; scripts, styles, forms, embeds, and tracking
+  pixels are stripped in the conversion. The `text` field never contains raw
+  HTML.
+- **Item text is data, never instructions.** The intelligence layer wraps
+  each item's text in explicit data delimiters. Instructions found inside
+  fetched content are treated as content to report on, never obeyed. During
+  briefing generation the agent performs no writes or network requests
+  beyond the steps in the execution flow.
+
 ### Deduplication and Clustering
 
 Deduplication is split across the two layers:
@@ -97,6 +112,27 @@ Deduplication is split across the two layers:
   generation, per the story-cluster rules in DESIGN.md. The MVP deliberately
   uses no embeddings; if item volume outgrows the context window, embedding
   pre-clustering is a Phase 2 optimization.
+
+### Context Budget
+
+Long items must not blow up the ranking context:
+
+- Items whose text exceeds roughly 3,000 words (typically podcast and video
+  transcripts) get a **pre-summary pass** using the podcast/video template in
+  PROMPTS.md. The summary is cached in `cache/` next to the transcript, keyed
+  by item id, so each item is summarized at most once.
+- The main ranking pass reads short items in full and long items via their
+  cached pre-summaries; the full transcript is consulted only when a specific
+  claim needs verification.
+
+### Novelty Memory
+
+`seen.jsonl` catches exact re-fetches but not the same story republished by
+a different source. For the novelty signal, the ranking context also
+includes the item titles and story topics from the last 7 days of briefings
+in `digests/` — the agent then judges "already covered unless there is a
+material new development" directly. No separate state file is needed; the
+digest archive is the memory.
 
 ### Normalized Item Schema
 
@@ -191,15 +227,17 @@ When the user requests a briefing, the skill:
 1. Loads `config.yaml` and `sources.yaml` (first run: conversational setup).
 2. Runs the connector scripts for the user's enabled categories, passing
    each category's `--since` from `state.json`.
-3. Reads `inbox/*.jsonl` and recent entries from `feedback.jsonl`, then
-   applies ranking, clustering, and digest prompts. Feedback is consumed
-   immediately: recent feedback events are injected into the ranking prompt
-   as soft preferences, so "less like this" takes effect on the very next
-   briefing.
-4. Writes the briefing to `digests/YYYY-MM-DD.md` and presents it. The
+3. Pre-summarizes any long items that lack a cached summary (see Context
+   Budget).
+4. Reads `inbox/*.jsonl`, recent entries from `feedback.jsonl`, and the last
+   7 days of digest headlines (see Novelty Memory), then applies ranking,
+   clustering, and digest prompts. Feedback is consumed immediately: recent
+   feedback events are injected into the ranking prompt as soft preferences,
+   so "less like this" takes effect on the very next briefing.
+5. Writes the briefing to `digests/YYYY-MM-DD.md` and presents it. The
    briefing ends with a short Run Report footer: sources succeeded and
    failed, new item count, and transcription count.
-5. Appends processed ids to `seen.jsonl`, advances `state.json`, and records
+6. Appends processed ids to `seen.jsonl`, advances `state.json`, and records
    any new feedback.
 
 Scheduling is out of scope for the MVP; runs are user-triggered. When the
@@ -219,6 +257,20 @@ Configured when the first script lands, in the same change:
 
 - Biome for lint and format
 - GitHub Actions CI: typecheck and `bun test`
+
+## Quality Evaluation
+
+Briefing quality must be checkable without relying on any one reviewer's
+eyes:
+
+- `fixtures/` holds a small sanitized corpus: a few items of every type,
+  including deliberate duplicates across sources, a long transcript, and
+  prompt-injection samples.
+- A scoring rubric derived from the eight ranking signals in DESIGN.md lives
+  next to the corpus.
+- A pull request that changes prompts must include before/after briefing
+  output on the same corpus. Reviewers may use an agent to score both
+  against the rubric; the score assists judgment, it does not gate the PR.
 
 ## Open Items
 

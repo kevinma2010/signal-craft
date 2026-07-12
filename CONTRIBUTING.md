@@ -18,7 +18,7 @@ Include source name, type, URL, authority, typical quality, update frequency, to
 
 ## Prompt Proposals
 
-Include current behavior, proposed behavior, example input, example output, expected improvement, and tradeoffs.
+Include current behavior, proposed behavior, example input, example output, expected improvement, and tradeoffs. Prompt changes must include before/after output on the fixture corpus in `fixtures/`, scored against its rubric.
 
 ## Pull Request Requirements
 
