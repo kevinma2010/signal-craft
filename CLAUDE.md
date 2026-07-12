@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-SignalCraft is an open-source AI intelligence agent that fetches high-signal AI content (builder posts, official blogs, GitHub releases, YouTube, podcasts, X topics), deduplicates and ranks it, and generates evidence-backed daily/weekly briefings. The repository itself is a Claude skill (`SKILL.md` at the root).
+SignalCraft is an open-source AI intelligence agent that fetches high-signal AI content (builder posts, official blogs, GitHub releases, YouTube, podcasts, X topics), deduplicates and ranks it, and generates evidence-backed daily/weekly briefings. The repository itself is an agent skill targeting multiple runtimes — Claude Code (via `SKILL.md`, the canonical behavior spec), Codex CLI, and Grok Build (both via a thin `AGENTS.md` adapter, added at implementation time). Core instructions must never depend on host-specific tools.
 
 **Current state:** documentation and design only — no implementation code exists yet. The MVP technical design is settled and lives in `docs/IMPLEMENTATION.md`; implementation is the next step.
 

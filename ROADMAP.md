@@ -20,6 +20,7 @@ Release a useful open-source briefing agent and validate source quality, digest 
 - Original source links
 - Local preferences
 - Basic delivery options
+- Runs in Claude Code, Codex CLI, and Grok Build
 
 ### Current Non-goals
 

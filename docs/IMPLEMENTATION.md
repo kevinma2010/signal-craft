@@ -10,11 +10,31 @@ The MVP has two layers:
 1. **Connector scripts** — one script per source category. Each script fetches
    content, normalizes it into a common item format, and writes JSONL to the
    local inbox. Scripts are deterministic and independently testable.
-2. **Intelligence layer** — Claude, driven by the skill and the prompts in
-   [PROMPTS.md](../PROMPTS.md), reads the normalized items and performs
-   filtering, ranking, story clustering, and briefing generation.
+2. **Intelligence layer** — the host agent, driven by the skill instructions
+   and the prompts in [PROMPTS.md](../PROMPTS.md), reads the normalized items
+   and performs filtering, ranking, story clustering, and briefing generation.
 
 Everything runs on the user's machine. There is no central service.
+
+## Runtime Portability
+
+SignalCraft targets multiple agent runtimes, not only Claude Code:
+
+- **Claude Code** — loaded as a skill (`SKILL.md`), optionally packaged as a
+  plugin.
+- **Codex CLI** — loaded via `AGENTS.md`.
+- **Grok Build** — loaded via `AGENTS.md` (Grok Build reads `AGENTS.md`,
+  skills, and MCP servers natively).
+
+The portable core is runtime-neutral: connector scripts, `PROMPTS.md`, the
+config and data layout under `~/.signalcraft/`, and the behavior spec.
+`SKILL.md` is the canonical behavior spec; `AGENTS.md` (added at
+implementation time) is a thin adapter that points to the same spec rather
+than duplicating it.
+
+Instructions must degrade gracefully across runtimes: use the structured
+question UI where the host provides one, otherwise fall back to plain
+conversational prompts; never depend on host-specific tools for core flow.
 
 ## Runtime Layout
 
@@ -183,11 +203,29 @@ When the user requests a briefing, the skill:
    immediately: recent feedback events are injected into the ranking prompt
    as soft preferences, so "less like this" takes effect on the very next
    briefing.
-4. Writes the briefing to `digests/YYYY-MM-DD.md` and presents it.
+4. Writes the briefing to `digests/YYYY-MM-DD.md` and presents it. The
+   briefing ends with a short Run Report footer: sources succeeded and
+   failed, new item count, and transcription count.
 5. Appends processed ids to `seen.jsonl`, advances `state.json`, and records
    any new feedback.
 
-Scheduling is out of scope for the MVP; runs are user-triggered.
+Scheduling is out of scope for the MVP; runs are user-triggered. When the
+skill is invoked without a specific request, it asks the user what to do
+(briefing now, catch up, manage sources or topics, feedback).
+
+## Distribution
+
+- Primary: clone the repository into the host runtime's skills directory
+  (for Claude Code, `~/.claude/skills/signalcraft`); update via `git pull`.
+- Claude Code plugin packaging (manifest in-repo) for marketplace install.
+- Codex CLI and Grok Build users load the same clone through `AGENTS.md`.
+
+## Engineering Conventions
+
+Configured when the first script lands, in the same change:
+
+- Biome for lint and format
+- GitHub Actions CI: typecheck and `bun test`
 
 ## Open Items
 

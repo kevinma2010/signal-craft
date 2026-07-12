@@ -19,6 +19,11 @@ description: AI intelligence agent for tracking builders, primary sources, offic
 
 ## Interaction
 
+When the skill is invoked without a specific request, start by asking the
+user what they want to do, using the environment's structured question UI
+when available. Offer the common actions: generate a briefing now, catch up
+since the last run, manage sources or topics, or give feedback.
+
 Users interact in natural language ("give me today's briefing", "follow the
 topic of coding agents", "less fundraising news"). In addition, these
 conventional subcommands are recognized as shortcuts for the same intents:
@@ -32,7 +37,7 @@ feedback <note>           Record a preference
 
 ## First Run
 
-Ask for digest frequency, delivery time, timezone, language, depth, interests, preferred source types, and delivery method. Prefer conversational setup over manual configuration editing.
+Ask for digest frequency, language, depth, interests, and preferred source types. Prefer conversational setup over manual configuration editing. Briefings are generated on request and saved locally; scheduled delivery is a later phase.
 
 ## Default Output
 
@@ -44,7 +49,13 @@ Builder Moves
 Official Updates
 Watch Next
 Read Later
+Run Report
 ```
+
+The Run Report is a short footer (one to three lines): sources succeeded
+and failed, new item count, and how many items were transcribed. A failed
+source must be visible so the user never mistakes a gap in coverage for a
+quiet day.
 
 ## Topic Tracking
 
