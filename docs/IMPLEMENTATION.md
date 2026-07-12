@@ -34,8 +34,9 @@ conversational prompts; never depend on host-specific tools for core flow.
 ```text
 ~/.signalcraft/
 ├── config.yaml        # preferences: frequency, language, depth, interests, delivery
-├── sources.yaml       # subscribed sources: type, URL/handle, weight
+├── sources.yaml       # user overlay over the default source pack (see below)
 ├── state.json         # last successful run timestamp per source category
+├── signalcraft.lock   # transient run lock (pid + started_at)
 ├── seen.jsonl         # processed item fingerprints (id, normalized url, first_seen)
 ├── feedback.jsonl     # user feedback events
 ├── inbox/             # normalized items written by connector scripts
@@ -46,6 +47,24 @@ conversational prompts; never depend on host-specific tools for core flow.
 ```
 
 User data lives outside the skill directory so skill updates never touch it.
+
+### Source Pack Layering
+
+The curated default source pack ships in the repository as
+`sources.default.yaml` and is updated via `git pull`. The user's
+`sources.yaml` stores only a diff: added sources, disabled defaults, and
+weight overrides. Connectors merge the two at load time, so pack
+improvements reach existing users automatically while user intent is never
+overwritten.
+
+### Concurrency
+
+A run takes `signalcraft.lock` (pid + started-at timestamp) before touching
+shared state. If the lock is already held, the skill tells the user another
+briefing run is in progress instead of proceeding. A stale lock older than
+30 minutes is taken over. This keeps concurrent sessions in different
+runtimes (e.g. Claude Code and Grok Build at once) from corrupting
+`state.json` or double-reporting items.
 
 ## Connector Scripts
 
@@ -121,6 +140,9 @@ Long items must not blow up the ranking context:
   transcripts) get a **pre-summary pass** using the podcast/video template in
   PROMPTS.md. The summary is cached in `cache/` next to the transcript, keyed
   by item id, so each item is summarized at most once.
+- Pre-summarization runs in the session, item by item — portable across all
+  runtimes. When the host supports subagents, items are summarized in
+  parallel, which also isolates long untrusted text from the main context.
 - The main ranking pass reads short items in full and long items via their
   cached pre-summaries; the full transcript is consulted only when a specific
   claim needs verification.

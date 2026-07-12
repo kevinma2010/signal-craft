@@ -31,6 +31,10 @@ Rules:
 - Keep the highest-value items near the top
 - Mention uncertainty when evidence is incomplete
 - Use the user's preferred language and depth
+- When the source language differs from the output language: write the
+  narrative in the user's language; keep product names, technical terms, and
+  API names in their original form; keep direct quotes in the original
+  language followed by a brief translation
 
 ## Social Posts
 
