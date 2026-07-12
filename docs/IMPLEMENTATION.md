@@ -18,19 +18,12 @@ Everything runs on the user's machine. There is no central service.
 
 ## Runtime Portability
 
-SignalCraft targets multiple agent runtimes, not only Claude Code:
+SignalCraft targets multiple agent runtimes, not only Claude Code. Claude
+Code, Codex CLI, and Grok Build all support the skill format natively, so a
+single `SKILL.md` serves every runtime — no per-runtime adapter files.
 
-- **Claude Code** — loaded as a skill (`SKILL.md`), optionally packaged as a
-  plugin.
-- **Codex CLI** — loaded via `AGENTS.md`.
-- **Grok Build** — loaded via `AGENTS.md` (Grok Build reads `AGENTS.md`,
-  skills, and MCP servers natively).
-
-The portable core is runtime-neutral: connector scripts, `PROMPTS.md`, the
-config and data layout under `~/.signalcraft/`, and the behavior spec.
-`SKILL.md` is the canonical behavior spec; `AGENTS.md` (added at
-implementation time) is a thin adapter that points to the same spec rather
-than duplicating it.
+The rest of the core is equally runtime-neutral: connector scripts,
+`PROMPTS.md`, and the config and data layout under `~/.signalcraft/`.
 
 Instructions must degrade gracefully across runtimes: use the structured
 question UI where the host provides one, otherwise fall back to plain
@@ -216,9 +209,9 @@ skill is invoked without a specific request, it asks the user what to do
 ## Distribution
 
 - Primary: clone the repository into the host runtime's skills directory
-  (for Claude Code, `~/.claude/skills/signalcraft`); update via `git pull`.
+  (for Claude Code, `~/.claude/skills/signalcraft`; Codex CLI and Grok Build
+  use their own skills directories); update via `git pull`.
 - Claude Code plugin packaging (manifest in-repo) for marketplace install.
-- Codex CLI and Grok Build users load the same clone through `AGENTS.md`.
 
 ## Engineering Conventions
 
