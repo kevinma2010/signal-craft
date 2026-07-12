@@ -98,33 +98,41 @@ Applies to YouTube videos and podcast episodes:
 Deepgram calls cost money, so `config.yaml` supports a per-run transcription
 budget (max episodes per run) and an opt-out.
 
-## X Collection via Grok
+## X Collection via Grok Build
 
-`fetch-x.ts` uses the Grok API's live search capability, which can search X
-posts and topics broadly without scraping:
+`fetch-x.ts` shells out to the **Grok Build CLI** (xAI's agentic
+command-line tool), whose Grok backend has native real-time access to X and
+can search posts and topics broadly without scraping:
 
 - Input: followed handles and tracked topics from `sources.yaml`.
-- The script asks Grok for recent relevant posts as structured JSON with
-  post URLs, authors, timestamps, and text.
-- `fetch-x.ts` calls the xAI API over HTTPS with `XAI_API_KEY`.
-- Output goes through the same normalized schema; post URLs are preserved as
-  evidence links.
+- The script runs Grok Build in headless print mode (`grok -p`) with a
+  search prompt and `--json-schema` so the results come back as validated
+  JSON matching our normalized item schema.
+- Post URLs, authors, and timestamps are preserved as evidence links.
 
-Grok is also the engine for topic discovery: expanding a tracked topic into
-related people, products, and repositories.
+Grok Build is also the engine for topic discovery: expanding a tracked topic
+into related people, products, and repositories.
+
+Authentication is handled by the CLI itself (`grok-build login`, a browser
+sign-in with a SuperGrok or X Premium+ account; the token is stored
+locally). SignalCraft never sees or stores these credentials.
 
 ## Credentials
 
-Read from environment variables only; never stored in config files or logs:
+API keys are read from environment variables only; never stored in config
+files or logs:
 
 | Variable | Used by | Required |
 |---|---|---|
-| `XAI_API_KEY` | `fetch-x.ts` | Only for X collection |
 | `DEEPGRAM_API_KEY` | transcription fallback | Only when native transcripts are missing |
 | `GITHUB_TOKEN` | `fetch-github.ts` | Optional, raises rate limits |
 
-Every connector degrades gracefully: a missing key disables that capability
-with a clear notice instead of failing the run.
+X collection needs no API key: it relies on the Grok Build CLI's own local
+login session (see above).
+
+Every connector degrades gracefully: a missing key, missing binary, or
+logged-out CLI disables that capability with a clear notice instead of
+failing the run.
 
 ## Dependencies
 
@@ -133,6 +141,7 @@ with a clear notice instead of failing the run.
 - npm packages: `yaml` for config parsing, `fast-xml-parser` for RSS/Atom
 - `yt-dlp` as an external binary for YouTube metadata, subtitles, and audio
   extraction
+- Grok Build CLI as an external binary for X collection and topic discovery
 - No database; state is JSONL and YAML files
 
 ## Execution Flow

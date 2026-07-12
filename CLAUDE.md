@@ -18,8 +18,8 @@ Two layers, all running on the user's machine (local-first, no central service â
 Key implementation decisions already made:
 
 - Transcription: native transcripts first (YouTube subtitles via yt-dlp, podcast show notes); Deepgram API as fallback; cache transcripts permanently by item id.
-- X collection and topic discovery: Grok API live search (`XAI_API_KEY`), not scraping.
-- Credentials come from environment variables only (`XAI_API_KEY`, `DEEPGRAM_API_KEY`, optional `GITHUB_TOKEN`); a missing key disables that capability gracefully rather than failing the run.
+- X collection and topic discovery: shell out to the Grok Build CLI (xAI's agent CLI) in headless mode (`grok -p` with `--json-schema`), which has native real-time X search; auth is the CLI's own local login, not an API key.
+- API keys come from environment variables only (`DEEPGRAM_API_KEY`, optional `GITHUB_TOKEN`); a missing key, binary, or CLI login disables that capability gracefully rather than failing the run.
 - User data lives in `~/.signalcraft/` (config, sources, seen-set, transcript cache, digests), never inside the skill directory.
 - No database â€” state is JSONL and YAML files.
 
