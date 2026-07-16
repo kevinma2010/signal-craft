@@ -18,7 +18,8 @@ sequences the work. Update the status column as tasks land.
 
 #3 Default source pack (no dependencies, content work)
 
-#1–#9 all done ─▶ #10 end-to-end verification + packaging
+#1–#9 all done ─▶ #10 unified incremental ingestion + optional X API
+                         └─▶ #11 end-to-end verification + packaging
 ```
 
 Task #2 is the critical path: once the first connector proves the full
@@ -134,9 +135,31 @@ Status: complete
 - Corpus doubles as connector unit-test input; CONTRIBUTING.md already
   requires prompt PRs to include before/after output on it
 
-### 10. End-to-end verification, packaging, install docs
+### 10. Unified incremental ingestion and optional X API
 
-Status: pending — ready
+Status: complete
+
+- Separate collection scheduling from daily, weekly, and ad-hoc report
+  generation; reports read permanent archived items and never re-fetch a
+  covered interval
+- Preserve legacy category history without treating it as source coverage;
+  migrate proven Grok search state into stable provider/source checkpoints
+  with archive-then-commit before report generation
+- Use stable normalized item IDs plus normalized URLs for permanent
+  idempotency; preserve provider IDs as metadata and retain failed-source gaps
+- Bound first-run collection to 24 hours, one page per source, and explicit
+  connector budgets
+- Add an opt-in X API adapter for narrow incremental searches; keep Grok Build
+  as the default topic-discovery provider
+- Enforce usage preflight, per-run/day/month hard budgets, no default
+  pagination, tiered query scheduling, circuit breaking, and source/page cost
+  audit records
+- Add unit and E2E coverage listed in `docs/TESTING.md`, including daily and
+  weekly archive windows with zero repeated connector calls
+
+### 11. End-to-end verification, packaging, install docs
+
+Status: in progress
 
 - Produce the first real briefing against the real source pack, exercising
   the full chain: fetch → transcribe → pre-summarize → rank → cluster →
@@ -144,3 +167,7 @@ Status: pending — ready
 - Verify on Claude Code plus at least one other runtime
 - Claude Code plugin manifest; README install guide (clone into the skills
   directory or plugin install, external binaries, API keys)
+- Completed: plugin manifest validation, Grok account-search smoke, external
+  binary checks, deterministic unit and E2E suite
+- Remaining: one bounded real briefing across the full content pipeline when
+  optional transcription and translation credentials are available

@@ -1,7 +1,11 @@
 # File Manifest
 
+- `IMPLEMENTATION_PLAN.md` — temporary task #10 implementation tracker
+
+- `.claude-plugin/plugin.json`
 - `.github/workflows/ci.yml`
 - `.gitignore`
+- `AGENTS.md`
 - `CLAUDE.md`
 - `CODE_OF_CONDUCT.md`
 - `CONTRIBUTING.md`
@@ -35,8 +39,14 @@
 - `scripts/lib/archive.ts`
 - `scripts/lib/cli.test.ts`
 - `scripts/lib/cli.ts`
+- `scripts/lib/collection.test.ts`
+- `scripts/lib/collection.ts`
+- `scripts/lib/config.test.ts`
+- `scripts/lib/config.ts`
 - `scripts/lib/executable.test.ts`
 - `scripts/lib/executable.ts`
+- `scripts/lib/file-lock.test.ts`
+- `scripts/lib/file-lock.ts`
 - `scripts/lib/files.ts`
 - `scripts/lib/github.test.ts`
 - `scripts/lib/github.ts`
@@ -65,8 +75,15 @@
 - `scripts/lib/versioned-file.ts`
 - `scripts/lib/x.test.ts`
 - `scripts/lib/x.ts`
+- `scripts/lib/x-api-ledger.test.ts`
+- `scripts/lib/x-api-ledger.ts`
+- `scripts/lib/x-api-normalize.test.ts`
+- `scripts/lib/x-api-normalize.ts`
+- `scripts/lib/x-api.test.ts`
+- `scripts/lib/x-api.ts`
 - `scripts/lib/youtube.test.ts`
 - `scripts/lib/youtube.ts`
 - `sources.default.yaml`
 - `tests/e2e/pipeline.test.ts`
+- `tests/e2e/x-api-pipeline.test.ts`
 - `tsconfig.json`

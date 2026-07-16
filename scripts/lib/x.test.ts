@@ -37,7 +37,7 @@ function validOutput(publishedAt = "2026-01-15T10:00:00Z"): string {
         fetched_at: "2026-01-16T00:00:00Z",
         text: "Technical details with evidence.",
         transcript_provider: "none",
-        extra: { likes: 10 },
+        extra: { likes: 10, content_status: "complete" },
       },
     ],
   });
@@ -71,6 +71,7 @@ describe("fetchXSources", () => {
     expect(result.items).toHaveLength(1);
     expect(result.succeeded).toEqual([source.id]);
     expect(result.items[0]?.extra.source_id).toBe(source.id);
+    expect(result.items[0]?.extra.content_status).toBe("complete");
     expect(calls[0]?.command).toBe("grok");
     expect(calls[0]?.args).toContain("-p");
     expect(calls[0]?.args).toContain("--json-schema");
@@ -139,6 +140,108 @@ describe("fetchXSources", () => {
     expect(prompt).toContain("Return at most 1 item");
     expect(prompt).not.toContain("expand topic discovery");
     expect(result.items).toHaveLength(1);
+  });
+
+  test("strictly limits handle searches and requests verbatim content", async () => {
+    const pathOptions = await paths();
+    let prompt = "";
+    const runner: SubprocessRunner = async (_command, args) => {
+      prompt = args[args.indexOf("-p") + 1] ?? "";
+      return { exitCode: 0, stdout: validOutput(), stderr: "" };
+    };
+
+    await fetchXSources({
+      sources: [{ ...source, handle: "@ExAmPlE" }],
+      since: new Date("2026-01-01T00:00:00Z"),
+      runner,
+      ...pathOptions,
+    });
+
+    expect(prompt).toContain("only for posts authored by @example");
+    expect(prompt).toContain("exact author filter from:example");
+    expect(prompt).toContain("Do not include posts merely mentioning");
+    expect(prompt).toContain("full verbatim post body");
+    expect(prompt).toContain(
+      "never silently summarize, rewrite, or paraphrase",
+    );
+    expect(prompt).not.toContain("related people, products, and repositories");
+  });
+
+  test("accepts normalized handle author and canonical URL casing", async () => {
+    const pathOptions = await paths();
+    const payload = JSON.parse(validOutput()) as {
+      items: Array<Record<string, unknown>>;
+    };
+    payload.items[0] = {
+      ...payload.items[0],
+      author: "EXAMPLE",
+      url: "https://x.com/ExAmPlE/status/123",
+    };
+
+    const result = await fetchXSources({
+      sources: [{ ...source, handle: "@example" }],
+      since: new Date("2026-01-01T00:00:00Z"),
+      runner: async () => ({
+        exitCode: 0,
+        stdout: JSON.stringify(payload),
+        stderr: "",
+      }),
+      ...pathOptions,
+    });
+
+    expect(result.items).toHaveLength(1);
+  });
+
+  test.each([
+    ["wrong author", { author: "@other" }],
+    ["wrong URL handle", { url: "https://x.com/other/status/123" }],
+  ])("rejects handle posts with %s", async (_label, override) => {
+    const pathOptions = await paths();
+    const payload = JSON.parse(validOutput()) as {
+      items: Array<Record<string, unknown>>;
+    };
+    payload.items[0] = { ...payload.items[0], ...override };
+    let calls = 0;
+
+    await expect(
+      fetchXSources({
+        sources: [source],
+        since: new Date("2026-01-01T00:00:00Z"),
+        runner: async () => {
+          calls += 1;
+          return {
+            exitCode: 0,
+            stdout: JSON.stringify(payload),
+            stderr: "",
+          };
+        },
+        ...pathOptions,
+      }),
+    ).rejects.toThrow("All X sources failed");
+    expect(calls).toBe(2);
+  });
+
+  test("rejects missing or invalid content status", async () => {
+    const pathOptions = await paths();
+    const payload = JSON.parse(validOutput()) as {
+      items: Array<{ extra: Record<string, unknown> }>;
+    };
+    const [item] = payload.items;
+    if (!item) throw new Error("Expected test fixture item");
+    item.extra.content_status = "partial";
+
+    await expect(
+      fetchXSources({
+        sources: [source],
+        since: new Date("2026-01-01T00:00:00Z"),
+        runner: async () => ({
+          exitCode: 0,
+          stdout: JSON.stringify(payload),
+          stderr: "",
+        }),
+        ...pathOptions,
+      }),
+    ).rejects.toThrow("All X sources failed");
   });
 
   test("does not repeat a completed search window", async () => {

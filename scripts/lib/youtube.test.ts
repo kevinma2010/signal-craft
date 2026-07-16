@@ -156,4 +156,47 @@ describe("YouTube connector", () => {
       "",
     ]);
   });
+
+  test("keeps feed metadata and continues after a transcription failure", async () => {
+    const paths = await makePaths();
+    const multiEntryFeed = `<feed>
+      <entry><yt:videoId>one</yt:videoId><title>One</title><published>2026-01-11T00:00:00Z</published><link rel="alternate" href="https://www.youtube.com/watch?v=one"/><media:group><media:description>First notes</media:description></media:group></entry>
+      <entry><yt:videoId>two</yt:videoId><title>Two</title><published>2026-01-12T00:00:00Z</published><link rel="alternate" href="https://www.youtube.com/watch?v=two"/><media:group><media:description>Second notes</media:description></media:group></entry>
+    </feed>`;
+    const errors: string[] = [];
+    let runnerCalls = 0;
+
+    const result = await fetchYouTubeSources({
+      sources: [source],
+      since: new Date("2026-01-01T00:00:00Z"),
+      ...paths,
+      fetcher: async () => new Response(multiEntryFeed),
+      runner: async () => {
+        runnerCalls += 1;
+        if (runnerCalls === 1) throw new Error("yt-dlp timed out");
+        return {
+          exitCode: 0,
+          stdout: new TextEncoder().encode("{}"),
+          stderr: "",
+        };
+      },
+      reportError: (message) => errors.push(message),
+    });
+
+    expect(runnerCalls).toBe(2);
+    expect(result.succeeded).toEqual([source.id]);
+    expect(result.failed).toEqual([]);
+    expect(result.items.map((item) => item.text)).toEqual([
+      "First notes",
+      "Second notes",
+    ]);
+    expect(result.items.map((item) => item.transcript_provider)).toEqual([
+      "none",
+      "none",
+    ]);
+    expect(result.notices).toEqual([
+      "Transcription failed for https://www.youtube.com/watch?v=one: yt-dlp timed out",
+    ]);
+    expect(errors).toEqual([`Channel: ${result.notices[0]}`]);
+  });
 });

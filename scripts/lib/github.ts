@@ -12,6 +12,8 @@ export interface FetchGitHubOptions {
   sources: readonly SourceDefinition[];
   since: Date;
   outPath: string;
+  writeOutput?: boolean;
+  maxPages?: number;
   seenPath: string;
   now?: Date;
   token?: string;
@@ -95,6 +97,7 @@ export async function fetchGitHubSources(
   const succeeded: string[] = [];
   const failed: GitHubFailure[] = [];
   const additions: NormalizedItem[] = [];
+  let completedEndpointCount = 0;
   for (const result of sourceResults) {
     if (result.setupError) {
       failed.push({ source: result.source.id, error: result.setupError });
@@ -106,6 +109,7 @@ export async function fetchGitHubSources(
     const endpointErrors = result.endpoints.filter(
       (endpoint) => endpoint.error,
     );
+    completedEndpointCount += successfulEndpoints.length;
     if (successfulEndpoints.length === 0) {
       failed.push({
         source: result.source.id,
@@ -115,7 +119,16 @@ export async function fetchGitHubSources(
       });
       continue;
     }
-    succeeded.push(result.source.id);
+    if (endpointErrors.length === 0) {
+      succeeded.push(result.source.id);
+    } else {
+      failed.push({
+        source: result.source.id,
+        error: endpointErrors
+          .map((endpoint) => `${endpoint.endpoint}: ${endpoint.error}`)
+          .join("; "),
+      });
+    }
     for (const endpoint of successfulEndpoints) {
       for (const item of endpoint.items ?? []) {
         const fingerprint = fingerprintUrl(item.url);
@@ -128,10 +141,12 @@ export async function fetchGitHubSources(
     }
   }
 
-  if (githubSources.length > 0 && succeeded.length === 0) {
+  if (githubSources.length > 0 && completedEndpointCount === 0) {
     throw new AllGitHubSourcesFailedError(failed);
   }
-  await appendJsonLines(options.outPath, additions);
+  if (options.writeOutput !== false) {
+    await appendJsonLines(options.outPath, additions);
+  }
   return { items: additions, succeeded, failed };
 }
 
@@ -202,7 +217,12 @@ async function fetchPages(
 ): Promise<unknown[]> {
   const values: unknown[] = [];
   let nextUrl: string | undefined = initialUrl;
-  while (nextUrl) {
+  let pageCount = 0;
+  while (
+    nextUrl &&
+    pageCount < (options.maxPages ?? Number.POSITIVE_INFINITY)
+  ) {
+    pageCount += 1;
     const response = await fetcher(nextUrl, {
       headers: requestHeaders(options.token),
       signal: AbortSignal.timeout(20_000),

@@ -35,8 +35,10 @@ conversational prompts; never depend on host-specific tools for core flow.
 ~/.signalcraft/
 ├── config.yaml        # preferences: frequency, language, depth, interests, delivery
 ├── sources.yaml       # user overlay over the default source pack (see below)
-├── state.json         # last successful run timestamp per source category
+├── state.json         # collection checkpoints and source health
 ├── signalcraft.lock   # transient run lock (pid + started_at)
+├── collection-state.lock # serializes archive/checkpoint commits
+├── x-api.lock         # serializes paid X API collection
 ├── seen.jsonl         # processed item fingerprints (id, normalized url, first_seen)
 ├── feedback.jsonl     # user feedback events
 ├── inbox/             # per-run staging written by connector scripts
@@ -44,7 +46,9 @@ conversational prompts; never depend on host-specific tools for core flow.
 ├── items/             # permanent archive of all processed items
 │   └── YYYY-MM.jsonl
 ├── cache/
-│   ├── x-search-state.json # successful search high-water marks by query fingerprint
+│   ├── x-search-state.json # legacy Grok search high-water marks; migrates into state.json
+│   ├── x-api-usage.jsonl   # paid request reservations and reconciliations
+│   ├── collection-pending/ # crash-recovery records for archive/checkpoint commits
 │   ├── transcripts/        # transcripts and pre-summaries, keyed by item id
 │   └── translations/       # full-text translations, keyed by item id + language
 └── digests/           # generated briefings, YYYY-MM-DD.md
@@ -71,22 +75,59 @@ Connectors copy ranking metadata into each normalized item's `extra` object.
 All content data persists locally — it feeds the future local reading view
 and the Phase 3 searchable archive. Retention is per type:
 
-- `inbox/` — per-run staging only. After a successful run, processed items
-  are appended to the `items/` archive; the staging area is cleared at the
-  start of the next run.
+- `inbox/` — collection staging only. Successful connector output is appended
+  to the `items/` archive and committed to collection state before report
+  generation starts; the staging area is then cleared.
 - `items/` — permanent. Monthly JSONL files holding every processed item in
   full (original text included).
 - `seen.jsonl` — pruned: fingerprints older than 90 days are dropped (the
   fetch lookback cap is 30 days, so older fingerprints can never match).
-- `cache/` (X search cursors, transcripts, pre-summaries, translations) —
-  permanent. These prevent repeated paid or token-consuming work.
+- Durable cache entries (X usage, transcripts, pre-summaries, translations) —
+  permanent. Pending collection records are removed after recovery or commit.
 - `digests/` — permanent.
+
+### Collection Ledger and Briefing Windows
+
+Collection is independent from report generation. A scheduled or manual
+collection run appends newly discovered normalized items to the permanent
+archive. Daily, weekly, and ad-hoc briefings then select an event-time window
+from `items/`; they do not invoke connectors themselves. In particular, a
+weekly briefing re-ranks and re-clusters the previous seven days of archived
+items rather than concatenating daily prose or fetching the sources again.
+
+`state.json` stores a checkpoint for every provider and stable source identity,
+not only one timestamp per category. A checkpoint contains the covered-through
+time, an optional provider cursor such as an X `since_id`, and the last
+successful collection time. Ranking metadata, schedule, page size, and result
+limit changes do not reset collection progress. Changing retrieval coordinates,
+such as an exact query, creates a new source identity with a bounded initial
+window while retaining the old ledger entry for audit.
+
+Connectors follow these rules:
+
+1. Ask the provider only for data after the committed source checkpoint when
+   the provider supports a cursor or time filter.
+2. Write a pending recovery record, durably archive normalized items, and then
+   atomically advance the checkpoint before report generation. Recovery
+   completes this sequence without another provider request. A report, model,
+   or process failure therefore cannot skip data or repeat paid collection.
+3. Keep a stable normalized item ID as the primary identity and the normalized
+   URL fingerprint as a fallback. Provider-native IDs remain in item metadata
+   where available. Archive and staging data are checked before appending.
+4. Never advance a failed source because another source in the category
+   succeeded. Retry only that source's uncovered interval.
+5. Perform a targeted, explicitly bounded gap repair only when the ledger
+   contains a missing interval. Routine report generation never backfills.
+
+The first collection run is a special bounded backfill. It defaults to 24
+hours, one page per source, and connector-specific item and cost ceilings.
+Expanding the lookback or enabling pagination requires an explicit user action.
 
 ### State Versioning
 
-Every state and config file carries a `version` field. When a newer skill
-loads an older file, it migrates the file in place after writing a backup
-next to it. Migration logic lives in `scripts/lib/` and is covered by tests.
+Every state and config file carries a `version` field and rejects unsupported
+future versions. `state.json` v1 is migrated in place after writing a backup;
+the currently single-version config and source schemas require no migration.
 
 ### Source Health
 
@@ -116,7 +157,7 @@ under `scripts/`:
 | `fetch-rss.ts` | Blogs, changelogs, podcasts | RSS/Atom via feed parsing |
 | `fetch-github.ts` | Releases, maintainer discussions | GitHub public REST API |
 | `fetch-youtube.ts` | Channels and videos | Channel RSS for discovery; yt-dlp for metadata and subtitles |
-| `fetch-x.ts` | X posts and topic discovery | Grok API live search over X content and topics |
+| `fetch-x.ts` | X posts and topic discovery | Grok Build CLI live search over X content and topics |
 
 Shared helpers live in `scripts/lib/` (normalization, seen-set handling,
 config loading).
@@ -137,12 +178,11 @@ bun scripts/fetch-<category>.ts --config ~/.signalcraft/sources.yaml \
 - Exit non-zero on total failure; partial source failures are reported on
   stderr and do not abort the run.
 
-`--since` is the category's last successful run from `state.json`, so a
-briefing always covers the gap since the previous one — no items are lost
-when the user skips days. Lookback is capped at 30 days. A connector's
-timestamp advances only when it succeeds, so a failed category re-covers
-its own gap on the next run. First run defaults to the digest frequency
-window (1 day for daily, 7 for weekly).
+`--since` is a safety lower bound supplied by the collection scheduler. Each
+connector combines it with its source-specific committed checkpoint and uses
+the later value. Lookback is capped at 30 days. Report frequency never changes
+collection lookback: the first run defaults to 24 hours, including when the
+first requested report is weekly.
 
 ### Content Sanitization
 
@@ -172,8 +212,8 @@ Deduplication is split across the two layers:
 - **Scripts: URL-level, deterministic.** Normalize the URL (strip tracking
   parameters, unify hosts), fingerprint it, and skip anything already in
   `seen.jsonl`.
-- **Claude: semantic, in context.** Cross-source story clustering — multiple
-  items covering the same event — is judged by Claude during briefing
+- **Intelligence layer: semantic, in context.** Cross-source story clustering — multiple
+  items covering the same event — is judged by the active runtime during briefing
   generation, per the story-cluster rules in DESIGN.md. The MVP deliberately
   uses no embeddings; if item volume outgrows the context window, embedding
   pre-clustering is a Phase 2 optimization.
@@ -263,7 +303,13 @@ Pre-summarization deliberately stays in-session with the host agent:
 summary quality directly drives ranking and briefing quality, so it is a
 core intelligence task, not mechanical work to outsource.
 
-## X Collection via Grok Build
+## X Collection
+
+X collection has two replaceable providers. Grok Build remains the default.
+The paid X API is disabled unless the user explicitly enables it and sets hard
+budgets.
+
+### Grok Build
 
 `fetch-x.ts` shells out to the **Grok Build CLI** (xAI's agentic
 command-line tool), whose Grok backend has native real-time access to X and
@@ -276,11 +322,11 @@ can search posts and topics broadly without scraping:
 - Each handle or exact query has a configuration fingerprint and persistent
   `searched_through` cursor. A later run searches only the uncovered time
   range; an already completed range does not start Grok again. Successful
-  sources advance independently, failed sources retry, and query or result
-  limit changes create a new fingerprint.
-- Search results are appended before cursors are atomically committed. A
-  crash may repeat the final search, but cannot advance a cursor past data
-  that was never written.
+  sources advance independently and failed sources retry. Handle or exact-query
+  changes create a new identity; result limits and schedule changes retain the
+  existing checkpoint.
+- Search results enter the same pending-record, archive, and checkpoint commit
+  flow as every other provider. Crash recovery does not invoke Grok again.
 - Post URLs, authors, and timestamps are preserved as evidence links.
 
 Grok Build is also the engine for topic discovery: expanding a tracked topic
@@ -289,6 +335,58 @@ into related people, products, and repositories.
 Authentication is handled by the CLI itself (`grok login`, a browser
 sign-in with a SuperGrok or X Premium+ account; the token is stored
 locally). SignalCraft never sees or stores these credentials.
+
+### Optional X API
+
+The X API is intended for narrow, deterministic incremental collection, not
+broad topic discovery. Account and exact-query searches keep independent
+`since_id` checkpoints. Daily and weekly reports consume their archived posts
+without making X requests.
+
+The adapter is fail-closed and enforces all of the following before a billable
+request:
+
+- `enabled` is false by default and requires explicit opt-in.
+- `/2/usage/tweets` must succeed; unavailable usage data disables the provider
+  for that run.
+- Worst-case reads for the next request must fit
+  `max_post_reads_per_run`, `max_cost_usd_per_run`,
+  `max_cost_usd_per_day`, and `max_cost_usd_per_month`.
+- Initial backfill is limited to 24 hours, one page per query, and the same
+  global run budget. Pagination is disabled by default.
+- Queries are scheduled by tier instead of all running every cycle. Overlapping
+  account and topic queries should be consolidated or alternated.
+- Optional user, media, and other billable expansions are omitted unless a
+  feature explicitly needs them and budgets for them.
+- Authentication failures, authorization failures, rate limits, unexpected
+  usage growth, or a projected budget overflow open a circuit breaker. A
+  successful billable response is never retried.
+
+The local budget ledger records source/page request metadata, returned-resource
+counts, estimated cost, and X-reported project usage. It durably
+reserves the worst-case cost before each request and reconciles after the
+response; an interrupted request retains its conservative reservation.
+Multi-page collection stores a continuation token without advancing the
+covered-through time until the final page is archived.
+Budget exhaustion skips remaining queries and is reported as a coverage gap,
+not as an absence of news. Console-side spending limits and disabled automatic
+recharge are required as a second, independent guard; local controls do not
+assume provider deduplication or billing guarantees.
+
+Example conservative defaults:
+
+```yaml
+x_api:
+  enabled: false
+  max_post_reads_per_run: 100
+  max_post_reads_per_day: 200
+  max_post_reads_per_month: 4000
+  max_cost_usd_per_run: 0.50
+  max_cost_usd_per_day: 1.00
+  max_cost_usd_per_month: 20.00
+  max_pages_per_query: 1
+  fail_closed: true
+```
 
 ## Credentials
 
@@ -300,9 +398,11 @@ files or logs:
 | `DEEPGRAM_API_KEY` | transcription fallback | Only when native transcripts are missing |
 | `DEEPSEEK_API_KEY` | full-text translation | Only for bilingual reading |
 | `GITHUB_TOKEN` | `fetch-github.ts` | Optional, raises rate limits |
+| `X_BEARER_TOKEN` | optional X API provider | Only after explicit X API opt-in |
 
-X collection needs no API key: it relies on the Grok Build CLI's own local
-login session (see above).
+Default X collection needs no API key: it relies on the Grok Build CLI's own
+local login session. `X_BEARER_TOKEN` does not enable the paid adapter by
+itself; configuration opt-in and budgets are also required.
 
 Every connector degrades gracefully: a missing key, missing binary, or
 logged-out CLI disables that capability with a clear notice instead of
@@ -312,7 +412,8 @@ failing the run.
 
 - Bun 1.x runs the TypeScript connector scripts directly; HTTP uses the
   built-in `fetch`
-- npm packages: `yaml` for config parsing, `fast-xml-parser` for RSS/Atom
+- npm packages: `yaml` for config parsing, `fast-xml-parser` for RSS/Atom,
+  `linkedom` and `turndown` for safe HTML-to-Markdown conversion
 - `yt-dlp` as an external binary for YouTube metadata, subtitles, and audio
   extraction
 - Grok Build CLI as an external binary for X collection and topic discovery
@@ -327,24 +428,27 @@ software silently, and declining only disables that source category.
 When the user requests a briefing, the skill:
 
 1. Loads `config.yaml` and `sources.yaml` (first run: conversational setup).
-2. Runs the connector scripts for the user's enabled categories, passing
-   each category's `--since` from `state.json`.
+2. Checks the collection ledger. For due sources and proven gaps only, runs
+   connector scripts from their source checkpoints, archives new items, then
+   commits `seen.jsonl` and checkpoints before model work starts.
 3. Pre-summarizes any long items that lack a cached summary (see Context
    Budget).
-4. Reads `inbox/*.jsonl`, recent entries from `feedback.jsonl`, and the last
-   7 days of digest headlines (see Novelty Memory), then applies ranking,
-   clustering, and digest prompts. Feedback is consumed immediately: recent
-   feedback events are injected into the ranking prompt as soft preferences,
-   so "less like this" takes effect on the very next briefing.
+4. Reads the requested time window from `items/`, recent entries from
+   `feedback.jsonl`, and the last 7 days of digest headlines (see Novelty
+   Memory), then applies ranking, clustering, and digest prompts. Weekly and
+   repeated reports reuse the archive without fetching covered intervals.
+   Feedback is consumed immediately: recent feedback events are injected into
+   the ranking prompt as soft preferences, so "less like this" takes effect on
+   the very next briefing.
 5. Writes the briefing to `digests/YYYY-MM-DD.md` and presents it. The
    briefing ends with a short Run Report footer: sources succeeded and
    failed, new item count, and transcription count.
-6. Archives processed items into `items/`, appends their ids to
-   `seen.jsonl`, advances `state.json`, and records any new feedback.
+6. Records source health and new feedback, then clears committed staging data.
 
-Scheduling is out of scope for the MVP; runs are user-triggered. When the
-skill is invoked without a specific request, it asks the user what to do
-(briefing now, catch up, manage sources or topics, feedback).
+Background scheduling is out of scope for the MVP; collection checks are
+user-triggered. When the skill is invoked without a specific request, it asks
+the user what to do (briefing now, catch up, manage sources or topics,
+feedback).
 
 ## Distribution
 
@@ -355,10 +459,10 @@ skill is invoked without a specific request, it asks the user what to do
 
 ## Engineering Conventions
 
-Configured when the first script lands, in the same change:
+Configured in the repository:
 
 - Biome for lint and format
-- GitHub Actions CI: typecheck and `bun test`
+- GitHub Actions CI: lint, typecheck, unit tests, E2E tests, and the full suite
 
 ## Quality Evaluation
 

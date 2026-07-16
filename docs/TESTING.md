@@ -19,6 +19,8 @@
 | GitHub | releases、maintainer discussions、分页、部分失败、token 脱敏 |
 | YouTube | feed、native subtitles、Deepgram fallback、预算、缺 `yt-dlp` 降级 |
 | X | 官方 headless 参数、严格 JSON 校验、一次重试、缺 CLI/登录降级 |
+| Collection ledger | provider/source checkpoint、配置 fingerprint、归档后提交、失败来源缺口、首次回填边界 |
+| X API budget | 默认关闭、usage 预检、四层预算、预留与结算、禁止分页、熔断、成功响应不重试 |
 | Translation | 缺 key、cache hit、API 成功/失败、并发 immutable cache |
 | Archive/JSONL | 月度归档幂等、seen 提交、非法 JSONL |
 
@@ -36,6 +38,10 @@
 8. 释放运行锁。
 
 第二条 E2E 验证类别失败隔离：RSS 全失败时 GitHub 仍完成归档，且 `state.json` 只推进 GitHub 时间戳。
+
+第三条 E2E 使用同一批归档条目读取日报和周报窗口，断言窗口读取不调用任何 connector，并验证周报读取最近 7 天原始条目而非日报文本。
+
+第四条 E2E 启用 mock X API：运行前读取远端 usage，预算内只获取 checkpoint 后的新 Post；同一区间重跑采集与读取报告窗口均不产生额外 billable response，并验证跨来源共享每轮预算。
 
 ## 命令
 

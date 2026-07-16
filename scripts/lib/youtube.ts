@@ -48,6 +48,7 @@ export async function fetchYouTubeSources(options: {
   sources: readonly SourceDefinition[];
   since: Date;
   outPath: string;
+  writeOutput?: boolean;
   seenPath: string;
   cacheDirectory: string;
   budget?: number;
@@ -88,15 +89,26 @@ export async function fetchYouTubeSources(options: {
         const fingerprint = fingerprintUrl(item.url);
         if (hasSeen(seen, item.url) || known.has(fingerprint)) continue;
         known.add(fingerprint);
-        const transcript = await transcribeYouTube({
-          itemId: item.id,
-          url: item.url,
-          cacheDirectory: options.cacheDirectory,
-          budget,
-          runner: options.runner,
-          fetcher,
-          deepgramApiKey: options.deepgramApiKey,
-        });
+        let transcript: Awaited<ReturnType<typeof transcribeYouTube>>;
+        try {
+          transcript = await transcribeYouTube({
+            itemId: item.id,
+            url: item.url,
+            cacheDirectory: options.cacheDirectory,
+            budget,
+            runner: options.runner,
+            fetcher,
+            deepgramApiKey: options.deepgramApiKey,
+          });
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          const notice = `Transcription failed for ${item.url}: ${message}`;
+          if (!result.notices.includes(notice)) result.notices.push(notice);
+          options.reportError?.(`${source.name}: ${notice}`);
+          result.items.push(item);
+          continue;
+        }
         if (transcript.notice && !result.notices.includes(transcript.notice))
           result.notices.push(transcript.notice);
         if (transcript.provider !== "none") {
@@ -114,7 +126,9 @@ export async function fetchYouTubeSources(options: {
   }
   if (sources.length > 0 && result.succeeded.length === 0)
     throw new AllYouTubeSourcesFailedError(result.failed);
-  await appendJsonLines(options.outPath, result.items);
+  if (options.writeOutput !== false) {
+    await appendJsonLines(options.outPath, result.items);
+  }
   return result;
 }
 

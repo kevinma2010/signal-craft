@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "signal-craft",
+  "version": "0.1.0",
+  "displayName": "SignalCraft",
+  "description": "Local-first AI intelligence collection and evidence-backed daily and weekly briefings.",
+  "author": {
+    "name": "Kevin Ma"
+  },
+  "repository": "https://github.com/kevinma2010/signal-craft",
+  "license": "Apache-2.0",
+  "skills": ["./"]
+}

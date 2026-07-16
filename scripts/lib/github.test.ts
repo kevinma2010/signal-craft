@@ -163,7 +163,7 @@ describe("fetchGitHubSources", () => {
     ]);
   });
 
-  test("keeps a source successful when one endpoint fails", async () => {
+  test("preserves items but fails a source when one endpoint fails", async () => {
     const paths = await makePaths();
     const errors: string[] = [];
     const result = await fetchGitHubSources({
@@ -177,8 +177,10 @@ describe("fetchGitHubSources", () => {
       reportError: (message) => errors.push(message),
     });
 
-    expect(result.succeeded).toEqual([repository.id]);
-    expect(result.failed).toEqual([]);
+    expect(result.succeeded).toEqual([]);
+    expect(result.failed).toEqual([
+      { source: repository.id, error: "discussions: HTTP 403" },
+    ]);
     expect(result.items).toHaveLength(1);
     expect(errors).toEqual(["Example Repository (discussions): HTTP 403"]);
     expect(errors.join(" ")).not.toContain("private details");

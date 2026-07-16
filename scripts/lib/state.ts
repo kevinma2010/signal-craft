@@ -1,7 +1,10 @@
+import { createHash } from "node:crypto";
 import { writeTextAtomic } from "./files";
+import type { SourceDefinition } from "./types";
+import { normalizeUrl } from "./url";
 import { loadVersionedFile, type Migration } from "./versioned-file";
 
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
 
 export interface CategoryState {
   last_success_at?: string;
@@ -13,10 +16,28 @@ export interface SourceHealth {
   last_error?: string;
 }
 
+export interface CollectionCheckpoint {
+  covered_through: string;
+  cursor?: string;
+  last_success_at: string;
+}
+
+export type CollectionSource = Pick<
+  SourceDefinition,
+  "id" | "url" | "handle" | "query"
+>;
+
+export interface CollectionSuccess {
+  coveredThrough: Date | string;
+  cursor?: string | null;
+  succeededAt?: Date | string;
+}
+
 export interface SignalCraftState {
   version: typeof STATE_VERSION;
   categories: Record<string, CategoryState>;
   sources: Record<string, SourceHealth>;
+  checkpoints: Record<string, CollectionCheckpoint>;
 }
 
 const migrations = new Map<number, Migration>([
@@ -59,10 +80,27 @@ const migrations = new Map<number, Migration>([
       };
     },
   ],
+  [
+    1,
+    (data) => {
+      const state = isRecord(data) ? data : {};
+      return {
+        version: 2,
+        categories: state.categories ?? {},
+        sources: state.sources ?? {},
+        checkpoints: {},
+      };
+    },
+  ],
 ]);
 
 export function createState(): SignalCraftState {
-  return { version: STATE_VERSION, categories: {}, sources: {} };
+  return {
+    version: STATE_VERSION,
+    categories: {},
+    sources: {},
+    checkpoints: {},
+  };
 }
 
 export async function loadState(path: string): Promise<SignalCraftState> {
@@ -114,12 +152,80 @@ export function recordSourceFailure(
   return consecutiveFailures;
 }
 
+export function createCollectionCheckpointKey(
+  provider: string,
+  source: CollectionSource,
+): string {
+  const normalizedProvider = requireNonEmptyString(provider, "provider");
+  const sourceId = requireNonEmptyString(source.id, "source id");
+  const coordinates = {
+    ...(source.url ? { url: normalizeUrl(source.url) } : {}),
+    ...(source.handle ? { handle: normalizeHandle(source.handle) } : {}),
+    ...(source.query ? { query: source.query.trim() } : {}),
+  };
+  if (Object.keys(coordinates).length === 0) {
+    throw new Error(
+      `Collection source has no retrieval coordinates: ${sourceId}`,
+    );
+  }
+  const fingerprint = createHash("sha256")
+    .update(JSON.stringify(coordinates))
+    .digest("hex");
+  return `${encodeURIComponent(normalizedProvider)}:${encodeURIComponent(sourceId)}:${fingerprint}`;
+}
+
+export function getCollectionCheckpoint(
+  state: SignalCraftState,
+  provider: string,
+  source: CollectionSource,
+): CollectionCheckpoint | undefined {
+  return state.checkpoints[createCollectionCheckpointKey(provider, source)];
+}
+
+export function commitCollectionSuccess(
+  state: SignalCraftState,
+  provider: string,
+  source: CollectionSource,
+  success: CollectionSuccess,
+): CollectionCheckpoint {
+  const key = createCollectionCheckpointKey(provider, source);
+  const existing = state.checkpoints[key];
+  const coveredThrough = requiredTimestamp(
+    success.coveredThrough,
+    "covered_through",
+  );
+  if (
+    existing &&
+    Date.parse(existing.covered_through) > Date.parse(coveredThrough)
+  ) {
+    return existing;
+  }
+  const lastSuccessAt = requiredTimestamp(
+    success.succeededAt ?? new Date(),
+    "last_success_at",
+  );
+  const cursor =
+    success.cursor === null
+      ? undefined
+      : success.cursor === undefined
+        ? existing?.cursor
+        : requireNonEmptyString(success.cursor, "cursor");
+  const checkpoint = {
+    covered_through: coveredThrough,
+    ...(cursor ? { cursor } : {}),
+    last_success_at: lastSuccessAt,
+  };
+  state.checkpoints[key] = checkpoint;
+  return checkpoint;
+}
+
 function validateState(data: unknown): SignalCraftState {
   if (
     !isRecord(data) ||
     data.version !== STATE_VERSION ||
     !isRecord(data.categories) ||
-    !isRecord(data.sources)
+    !isRecord(data.sources) ||
+    !isRecord(data.checkpoints)
   ) {
     throw new Error("Invalid state.json");
   }
@@ -157,7 +263,30 @@ function validateState(data: unknown): SignalCraftState {
       ...(lastError ? { last_error: lastError } : {}),
     };
   }
-  return { version: STATE_VERSION, categories, sources };
+  const checkpoints: Record<string, CollectionCheckpoint> = {};
+  for (const [key, value] of Object.entries(data.checkpoints)) {
+    if (!isRecord(value)) {
+      throw new Error(`Invalid collection checkpoint: ${key}`);
+    }
+    const coveredThrough = requiredTimestamp(
+      value.covered_through,
+      `${key}.covered_through`,
+    );
+    const lastSuccessAt = requiredTimestamp(
+      value.last_success_at,
+      `${key}.last_success_at`,
+    );
+    const cursor = value.cursor;
+    if (cursor !== undefined && (typeof cursor !== "string" || !cursor)) {
+      throw new Error(`Invalid cursor for collection checkpoint: ${key}`);
+    }
+    checkpoints[key] = {
+      covered_through: coveredThrough,
+      ...(cursor ? { cursor } : {}),
+      last_success_at: lastSuccessAt,
+    };
+  }
+  return { version: STATE_VERSION, categories, sources, checkpoints };
 }
 
 function optionalTimestamp(value: unknown, label: string): string | undefined {
@@ -168,6 +297,27 @@ function optionalTimestamp(value: unknown, label: string): string | undefined {
     throw new Error(`Invalid timestamp: ${label}`);
   }
   return value;
+}
+
+function requiredTimestamp(value: unknown, label: string): string {
+  const timestamp = value instanceof Date ? value.toISOString() : value;
+  if (typeof timestamp !== "string" || Number.isNaN(Date.parse(timestamp))) {
+    throw new Error(`Invalid timestamp: ${label}`);
+  }
+  return timestamp;
+}
+
+function requireNonEmptyString(value: unknown, label: string): string {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error(`${label} must be a non-empty string`);
+  }
+  return value.trim();
+}
+
+function normalizeHandle(handle: string): string {
+  return requireNonEmptyString(handle, "source handle")
+    .replace(/^@/, "")
+    .toLowerCase();
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

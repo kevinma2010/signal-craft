@@ -1,6 +1,9 @@
 export * from "./archive";
 export * from "./cli";
+export * from "./collection";
+export * from "./config";
 export * from "./executable";
+export * from "./file-lock";
 export * from "./github";
 export * from "./jsonl";
 export * from "./lock";
@@ -14,4 +17,7 @@ export * from "./translation";
 export * from "./types";
 export * from "./url";
 export * from "./x";
+export * from "./x-api";
+export * from "./x-api-ledger";
+export * from "./x-api-normalize";
 export * from "./youtube";

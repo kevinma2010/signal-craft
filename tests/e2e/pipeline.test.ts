@@ -2,7 +2,11 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { archiveProcessedItems } from "../../scripts/lib/archive";
+import {
+  archiveProcessedItems,
+  readArchivedItems,
+} from "../../scripts/lib/archive";
+import { collectAndCommitSource } from "../../scripts/lib/collection";
 import { writeTextAtomic } from "../../scripts/lib/files";
 import { fetchGitHubSources } from "../../scripts/lib/github";
 import { readJsonLines } from "../../scripts/lib/jsonl";
@@ -176,7 +180,7 @@ describe("SignalCraft pipeline", () => {
     expect(secondRun.flatMap((result) => result.items)).toHaveLength(0);
     await lock.release();
     expect(await readFile(join(directory, "state.json"), "utf8")).toContain(
-      '"version": 1',
+      '"version": 2',
     );
   });
 
@@ -239,6 +243,62 @@ describe("SignalCraft pipeline", () => {
     expect(saved.categories.github?.last_success_at).toBe(now.toISOString());
     expect(saved.categories.rss).toBeUndefined();
     expect((await loadSeenRecords(seenPath, now)).size).toBe(1);
+  });
+
+  test("reuses one collection for daily and weekly report windows", async () => {
+    directory = await mkdtemp(join(tmpdir(), "signalcraft-e2e-reuse-"));
+    const now = new Date("2026-01-17T00:00:00Z");
+    const source: SourceDefinition = {
+      id: "blog",
+      name: "Blog",
+      type: "rss",
+      category: "official",
+      weight: 1,
+      url: "https://feeds.example/blog.xml",
+    };
+    let connectorCalls = 0;
+    const collect = () =>
+      collectAndCommitSource({
+        dataDirectory: directory as string,
+        provider: "rss",
+        source,
+        initialSince: new Date("2026-01-10T00:00:00Z"),
+        through: now,
+        collect: async () => {
+          connectorCalls += 1;
+          return {
+            items: [
+              {
+                id: "weekly-item",
+                type: "article",
+                source: "Blog",
+                author: "Author",
+                title: "Weekly Item",
+                url: "https://blog.example/weekly-item",
+                published_at: "2026-01-16T12:00:00Z",
+                fetched_at: now.toISOString(),
+                text: "Evidence",
+                transcript_provider: "none",
+                extra: {},
+              },
+            ],
+          };
+        },
+      });
+
+    expect((await collect()).status).toBe("collected");
+    const daily = await readArchivedItems(directory, {
+      from: new Date("2026-01-16T00:00:00Z"),
+      to: now,
+    });
+    const weekly = await readArchivedItems(directory, {
+      from: new Date("2026-01-10T00:00:00Z"),
+      to: now,
+    });
+    expect((await collect()).status).toBe("already-covered");
+    expect(daily).toHaveLength(1);
+    expect(weekly).toEqual(daily);
+    expect(connectorCalls).toBe(1);
   });
 });
 
@@ -334,7 +394,7 @@ function xOutput(): string {
         fetched_at: "2026-01-17T00:00:00Z",
         text: "Primary evidence",
         transcript_provider: "none",
-        extra: {},
+        extra: { content_status: "complete" },
       },
     ],
   });

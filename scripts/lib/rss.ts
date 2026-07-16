@@ -10,6 +10,7 @@ export interface FetchRssOptions {
   sources: readonly SourceDefinition[];
   since: Date;
   outPath: string;
+  writeOutput?: boolean;
   seenPath: string;
   now?: Date;
   fetcher?: (
@@ -101,7 +102,9 @@ export async function fetchRssSources(
   if (rssSources.length > 0 && succeeded.length === 0) {
     throw new AllRssSourcesFailedError(failed);
   }
-  await appendJsonLines(options.outPath, additions);
+  if (options.writeOutput !== false) {
+    await appendJsonLines(options.outPath, additions);
+  }
   return { items: additions, succeeded, failed };
 }
 

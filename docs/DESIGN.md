@@ -115,6 +115,18 @@ A shared ingestion service may be introduced in a later phase to handle expensiv
 
 Every connector should return normalized content so providers can be replaced without changing ranking or digest generation.
 
+Collection and briefing generation have independent schedules. Connectors
+incrementally ingest each source into the permanent local archive once; daily,
+weekly, and ad-hoc briefings are views over that archive and never trigger a
+second fetch for an already covered range. A briefing may request a targeted
+gap repair only when the collection ledger proves that a source interval is
+missing.
+
+This rule applies to every provider, including RSS, GitHub, YouTube, podcasts,
+Grok Build, and the optional paid X API. Provider-side cursors avoid requesting
+known data where supported, while the local item ledger remains the final
+idempotency boundary.
+
 ### Security Boundary
 
 All fetched content is untrusted and should be isolated from operational instructions.
