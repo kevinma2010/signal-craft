@@ -1,0 +1,15 @@
+{
+  "files": {
+    "includes": ["**", "!node_modules", "!.git"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space"
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended"
+    }
+  }
+}

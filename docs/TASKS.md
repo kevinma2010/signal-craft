@@ -29,7 +29,7 @@ in parallel.
 
 ### 1. Scaffolding and the `scripts/lib` shared library
 
-Status: pending
+Status: complete
 
 - `package.json` (Bun 1.x + TypeScript), Biome (lint/format), GitHub
   Actions CI (typecheck + `bun test`)
@@ -43,7 +43,7 @@ Status: pending
 
 ### 2. `fetch-rss.ts` — first connector
 
-Status: pending — blocked by #1
+Status: complete
 
 - Implements the script contract (`--config` / `--since` / `--out`) for
   RSS/Atom (blogs, changelogs, podcasts) using `fast-xml-parser`
@@ -54,7 +54,7 @@ Status: pending — blocked by #1
 
 ### 3. Default source pack `sources.default.yaml`
 
-Status: pending — no dependencies
+Status: in progress — draft awaiting Kevin approval
 
 - 10–20 high-quality, primarily English sources (official blogs and
   changelogs, GitHub repos, YouTube channels, podcasts, X topics)
@@ -65,7 +65,7 @@ Status: pending — no dependencies
 
 ### 4. `fetch-github.ts`
 
-Status: pending — blocked by #2
+Status: complete
 
 - Releases and maintainer discussions via the GitHub public REST API
 - `GITHUB_TOKEN` optional (raises rate limits), graceful degradation
@@ -73,7 +73,7 @@ Status: pending — blocked by #2
 
 ### 5. `fetch-youtube.ts` and the transcription chain
 
-Status: pending — blocked by #2
+Status: complete
 
 - Channel RSS for discovery; yt-dlp for metadata and subtitles
 - Transcription chain: native subtitles / show notes first → Deepgram
@@ -84,10 +84,10 @@ Status: pending — blocked by #2
 
 ### 6. `fetch-x.ts` — Grok Build integration
 
-Status: pending — blocked by #2
+Status: complete
 
 - Subprocess call to the Grok Build CLI in headless mode (`grok -p` with
-  `--json-schema`; verify exact flags against `--help` locally)
+  `--json-schema`; verified against the locally installed CLI)
 - Searches X posts and topics from `sources.yaml`; topic expansion (people,
   products, repos) goes through the same channel
 - Schema-validate the agent output with one retry
@@ -96,7 +96,7 @@ Status: pending — blocked by #2
 
 ### 7. DeepSeek full-text translation module
 
-Status: pending — blocked by #1
+Status: complete
 
 - DeepSeek API, Markdown in/out, structure and media links preserved
 - Scope: items selected into a briefing, plus on-demand for archived items
@@ -107,7 +107,7 @@ Status: pending — blocked by #1
 
 ### 8. SKILL.md execution details
 
-Status: pending — blocked by #2
+Status: complete
 
 - Upgrade SKILL.md from a descriptive spec to executable instructions:
   first-run conversational setup (writes `config.yaml` + `sources.yaml`
@@ -120,7 +120,7 @@ Status: pending — blocked by #2
 
 ### 9. Fixtures corpus and scoring rubric
 
-Status: pending — blocked by #1
+Status: complete
 
 - `fixtures/`: sanitized samples of every item type, deliberate cross-source
   duplicates, one long transcript, prompt-injection samples
@@ -130,7 +130,7 @@ Status: pending — blocked by #1
 
 ### 10. End-to-end verification, packaging, install docs
 
-Status: pending — blocked by #3–#9
+Status: pending — blocked by #3 approval
 
 - Produce the first real briefing against the real source pack, exercising
   the full chain: fetch → transcribe → pre-summarize → rank → cluster →

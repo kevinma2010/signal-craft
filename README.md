@@ -84,9 +84,17 @@ See [docs/DESIGN.md](docs/DESIGN.md).
 
 ```text
 signal-craft/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── .gitignore
 ├── README.md
 ├── LICENSE
 ├── NOTICE
+├── package.json
+├── bun.lock
+├── tsconfig.json
+├── biome.json
 ├── SKILL.md
 ├── ROADMAP.md
 ├── CONTRIBUTING.md
@@ -97,9 +105,48 @@ signal-craft/
 ├── CLAUDE.md
 ├── PROMPTS.md
 ├── EXAMPLES.md
+├── sources.default.yaml
+├── fixtures/
+│   ├── README.md
+│   ├── SCORING_RUBRIC.md
+│   ├── normalized-items.jsonl
+│   ├── long-transcript.jsonl
+│   └── rss/
+│       └── atom.xml
+├── scripts/
+│   ├── fetch-rss.ts
+│   ├── fetch-github.ts
+│   ├── fetch-youtube.ts
+│   ├── fetch-x.ts
+│   └── lib/
+│       ├── archive.ts
+│       ├── cli.ts
+│       ├── executable.ts
+│       ├── index.ts
+│       ├── files.ts
+│       ├── github.ts
+│       ├── jsonl.ts
+│       ├── lock.ts
+│       ├── rss.ts
+│       ├── sanitize.ts
+│       ├── seen.ts
+│       ├── sources.ts
+│       ├── state.ts
+│       ├── transcription.ts
+│       ├── translation.ts
+│       ├── types.ts
+│       ├── url.ts
+│       ├── versioned-file.ts
+│       ├── x.ts
+│       ├── youtube.ts
+│       └── *.test.ts
+├── tests/
+│   └── e2e/
+│       └── pipeline.test.ts
 └── docs/
     ├── DESIGN.md
     ├── IMPLEMENTATION.md
+    ├── TESTING.md
     └── TASKS.md
 ```
 

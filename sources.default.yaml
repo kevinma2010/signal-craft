@@ -1,0 +1,113 @@
+version: 1
+sources:
+  - id: openai-news
+    name: OpenAI News
+    type: rss
+    category: official
+    weight: 1.2
+    url: https://openai.com/news/rss.xml
+
+  - id: google-deepmind-blog
+    name: Google DeepMind Blog
+    type: rss
+    category: research
+    weight: 1.2
+    url: https://deepmind.google/blog/rss.xml
+
+  - id: hugging-face-blog
+    name: Hugging Face Blog
+    type: rss
+    category: official
+    weight: 1.0
+    url: https://huggingface.co/blog/feed.xml
+
+  - id: simon-willison
+    name: Simon Willison
+    type: rss
+    category: builder
+    weight: 1.0
+    url: https://simonwillison.net/atom/everything/
+
+  - id: practical-ai
+    name: Practical AI
+    type: rss
+    category: podcast
+    weight: 0.9
+    url: https://changelog.com/practicalai/feed
+
+  - id: latent-space
+    name: Latent Space
+    type: rss
+    category: podcast
+    weight: 0.9
+    url: https://www.latent.space/feed
+
+  - id: openai-python
+    name: OpenAI Python SDK
+    type: github
+    category: release
+    weight: 1.1
+    url: https://github.com/openai/openai-python
+
+  - id: anthropic-sdk-python
+    name: Anthropic Python SDK
+    type: github
+    category: release
+    weight: 1.1
+    url: https://github.com/anthropics/anthropic-sdk-python
+
+  - id: hugging-face-transformers
+    name: Hugging Face Transformers
+    type: github
+    category: release
+    weight: 1.1
+    url: https://github.com/huggingface/transformers
+
+  - id: ollama
+    name: Ollama
+    type: github
+    category: release
+    weight: 1.0
+    url: https://github.com/ollama/ollama
+
+  - id: openai-youtube
+    name: OpenAI YouTube
+    type: youtube
+    category: official
+    weight: 1.1
+    url: https://www.youtube.com/channel/UCXZCJLdBC09xxGZ6gcdrc6A
+
+  - id: anthropic-youtube
+    name: Anthropic YouTube
+    type: youtube
+    category: official
+    weight: 1.1
+    url: https://www.youtube.com/channel/UCrDwWp7EBBv4NwvScIpBDOA
+
+  - id: ai-engineer-youtube
+    name: AI Engineer YouTube
+    type: youtube
+    category: conference
+    weight: 1.0
+    url: https://www.youtube.com/channel/UCLKPca3kwwd-B59HNr-_lvA
+
+  - id: openai-developers-x
+    name: OpenAI Developers on X
+    type: x
+    category: official
+    weight: 1.1
+    handle: OpenAIDevs
+
+  - id: anthropic-x
+    name: Anthropic on X
+    type: x
+    category: official
+    weight: 1.1
+    handle: AnthropicAI
+
+  - id: google-deepmind-x
+    name: Google DeepMind on X
+    type: x
+    category: official
+    weight: 1.1
+    handle: googledeepmind

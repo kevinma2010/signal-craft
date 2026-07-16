@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Northstar Research Blog</title>
+  <id>https://northstar.example/research/feed</id>
+  <updated>2026-01-12T09:05:00Z</updated>
+  <link href="https://northstar.example/research/feed" rel="self" />
+  <entry>
+    <id>https://northstar.example/research/deterministic-cache-reuse</id>
+    <title>Northstar publishes deterministic cache reuse results</title>
+    <author><name>Mira Chen and Elias Ford</name></author>
+    <published>2026-01-12T09:00:00Z</published>
+    <updated>2026-01-12T09:00:00Z</updated>
+    <link href="https://northstar.example/research/deterministic-cache-reuse?utm_source=fixture" />
+    <content type="html"><![CDATA[
+      <p>Northstar reports a deterministic cache reuse method for repeated prefixes in agent workloads.</p>
+      <p>Median time to first token fell from 420 ms to 255 ms when at least 70 percent of the prefix matched.</p>
+      <script>window.fixtureTracker = true;</script>
+      <img src="https://northstar.example/tracker.gif" width="1" height="1" alt="" />
+      <p>The implementation hashes canonical message blocks and invalidates entries when tool schemas change.</p>
+    ]]></content>
+  </entry>
+</feed>

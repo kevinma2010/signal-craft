@@ -262,8 +262,8 @@ can search posts and topics broadly without scraping:
 
 - Input: followed handles and tracked topics from `sources.yaml`.
 - The script runs Grok Build in headless print mode (`grok -p`) with a
-  search prompt and `--json-schema` so the results come back as validated
-  JSON matching our normalized item schema.
+  search prompt and `--json-schema`. The script also validates returned JSON
+  locally and retries malformed output once.
 - Post URLs, authors, and timestamps are preserved as evidence links.
 
 Grok Build is also the engine for topic discovery: expanding a tracked topic
