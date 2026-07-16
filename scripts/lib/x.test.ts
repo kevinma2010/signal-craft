@@ -141,6 +141,147 @@ describe("fetchXSources", () => {
     expect(result.items).toHaveLength(1);
   });
 
+  test("does not repeat a completed search window", async () => {
+    const pathOptions = await paths();
+    let calls = 0;
+    const runner: SubprocessRunner = async () => {
+      calls += 1;
+      return { exitCode: 0, stdout: validOutput(), stderr: "" };
+    };
+    const options = {
+      sources: [source],
+      since: new Date("2026-01-01T00:00:00Z"),
+      now: new Date("2026-01-16T00:00:00Z"),
+      runner,
+      ...pathOptions,
+    };
+
+    await fetchXSources(options);
+    const second = await fetchXSources(options);
+
+    expect(calls).toBe(1);
+    expect(second.items).toEqual([]);
+    expect(second.succeeded).toEqual([source.id]);
+  });
+
+  test("continues from the previous successful cursor", async () => {
+    const pathOptions = await paths();
+    const prompts: string[] = [];
+    const runner: SubprocessRunner = async (_command, args) => {
+      prompts.push(args[args.indexOf("-p") + 1] ?? "");
+      return { exitCode: 0, stdout: JSON.stringify({ items: [] }), stderr: "" };
+    };
+    const options = {
+      sources: [source],
+      since: new Date("2026-01-01T00:00:00Z"),
+      runner,
+      ...pathOptions,
+    };
+
+    await fetchXSources({
+      ...options,
+      now: new Date("2026-01-16T00:00:00Z"),
+    });
+    await fetchXSources({
+      ...options,
+      now: new Date("2026-01-17T00:00:00Z"),
+    });
+
+    expect(prompts).toHaveLength(2);
+    expect(prompts[1]).toContain(
+      "published after 2026-01-16T00:00:00.000Z and through 2026-01-17T00:00:00.000Z",
+    );
+  });
+
+  test("shares a cursor between duplicate search definitions", async () => {
+    const pathOptions = await paths();
+    let calls = 0;
+    const result = await fetchXSources({
+      sources: [source, { ...source, id: "duplicate-x" }],
+      since: new Date("2026-01-01T00:00:00Z"),
+      now: new Date("2026-01-16T00:00:00Z"),
+      runner: async () => {
+        calls += 1;
+        return {
+          exitCode: 0,
+          stdout: JSON.stringify({ items: [] }),
+          stderr: "",
+        };
+      },
+      ...pathOptions,
+    });
+
+    expect(calls).toBe(1);
+    expect(result.succeeded).toEqual([source.id, "duplicate-x"]);
+  });
+
+  test("searches again when the query configuration changes", async () => {
+    const pathOptions = await paths();
+    let calls = 0;
+    const runner: SubprocessRunner = async () => {
+      calls += 1;
+      return { exitCode: 0, stdout: JSON.stringify({ items: [] }), stderr: "" };
+    };
+    const base = {
+      id: "topic-agents",
+      name: "Agents",
+      type: "x" as const,
+      category: "topic",
+      weight: 1,
+      maxResults: 10,
+    };
+    const options = {
+      since: new Date("2026-01-01T00:00:00Z"),
+      now: new Date("2026-01-16T00:00:00Z"),
+      runner,
+      ...pathOptions,
+    };
+
+    await fetchXSources({
+      ...options,
+      sources: [{ ...base, query: "agent engineering lang:en" }],
+    });
+    await fetchXSources({
+      ...options,
+      sources: [{ ...base, query: "coding agents lang:en" }],
+    });
+
+    expect(calls).toBe(2);
+  });
+
+  test("advances successful sources while retrying failed sources", async () => {
+    const pathOptions = await paths();
+    const calls = new Map<string, number>();
+    const runner: SubprocessRunner = async (_command, args) => {
+      const prompt = args[args.indexOf("-p") + 1] ?? "";
+      const handle = prompt.includes("@example") ? "example" : "broken";
+      calls.set(handle, (calls.get(handle) ?? 0) + 1);
+      return handle === "example"
+        ? { exitCode: 0, stdout: validOutput(), stderr: "" }
+        : { exitCode: 1, stdout: "", stderr: "temporary failure" };
+    };
+    const options = {
+      sources: [
+        source,
+        { ...source, id: "broken-x", name: "Broken", handle: "broken" },
+      ],
+      since: new Date("2026-01-01T00:00:00Z"),
+      now: new Date("2026-01-16T00:00:00Z"),
+      runner,
+      ...pathOptions,
+    };
+
+    await fetchXSources(options);
+    await fetchXSources(options);
+
+    expect(calls).toEqual(
+      new Map([
+        ["example", 1],
+        ["broken", 2],
+      ]),
+    );
+  });
+
   test("retries malformed structured output exactly once", async () => {
     const pathOptions = await paths();
     let calls = 0;

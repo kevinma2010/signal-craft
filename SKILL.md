@@ -67,7 +67,7 @@ weights: {}
 严格按以下六步执行，不重排持久化边界：
 
 1. **加载配置。** 读取并迁移 `config.yaml`、`sources.yaml`、`state.json`；将用户 overlay 合并到 `sources.default.yaml`。首次运行先完成上述对话设置。每类来源的 `since` 取该类 `last_success_at`；不存在时按频率取 1 天或 7 天，最长回看 30 天。
-2. **运行连接器。** 清理本轮旧暂存后，对每个启用类别执行 `bun scripts/fetch-<category>.ts --config ~/.signalcraft/sources.yaml --since <ISO8601> --out ~/.signalcraft/inbox/<category>.jsonl`。可并行运行独立类别。单一来源失败时继续该类别并记录来源健康度；类别整体失败时继续其他类别，且不推进该类别时间戳。
+2. **运行连接器。** 清理本轮旧暂存后，对每个启用类别执行 `bun scripts/fetch-<category>.ts --config ~/.signalcraft/sources.yaml --since <ISO8601> --out ~/.signalcraft/inbox/<category>.jsonl`。可并行运行独立类别。X 连接器使用持久化的 handle/query 游标，仅搜索尚未覆盖的时间区间；同一配置下已完成的区间不得再次调用 Grok。单一来源失败时继续该类别并记录来源健康度；类别整体失败时继续其他类别，且不推进该类别时间戳。
 3. **预摘要长内容。** 对正文约超过 3,000 词且没有缓存的条目，使用 `PROMPTS.md` 的 “Podcasts and Videos” 模板逐条生成预摘要，写入 `cache/transcripts/` 中以条目 ID 为键的永久缓存。宿主支持子代理时可并行；否则顺序处理。排名读取短正文和长内容预摘要；仅在核实具体声明时读取完整长正文。绝不重新生成已有缓存。
 4. **排序、聚类、生成。** 读取 `inbox/*.jsonl`、近期 `feedback.jsonl` 事件，以及过去 7 天简报中的标题和故事主题。将反馈作为软偏好立即注入排序；已报道故事除非有实质新进展，否则降低新颖性。按 `docs/DESIGN.md` 的八个信号排序并合并跨来源故事，优先原始来源、保留有用旁证、分歧和时间线。按内容类型选用 `PROMPTS.md` 的现有模板生成用户语言与指定深度的简报；不复制或改写模板规则。
 5. **写入并呈现。** 将简报写入 `digests/YYYY-MM-DD.md` 并展示。末尾必须有 1–3 行 Run Report：成功与失败来源、新条目数、转录数，以及本轮所有降级。连续失败至少 3 次的来源给出禁用建议；只有用户确认后才写入 overlay，绝不自动禁用。

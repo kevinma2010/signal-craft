@@ -1,4 +1,7 @@
+import { createHash } from "node:crypto";
+import { dirname, join } from "node:path";
 import { resolveExecutable } from "./executable";
+import { readTextIfExists, writeTextAtomic } from "./files";
 import { appendJsonLines, readJsonLines } from "./jsonl";
 import { hasSeen, loadSeenRecords } from "./seen";
 import { getSourceMetadata } from "./sources";
@@ -25,6 +28,7 @@ export interface FetchXOptions {
   since: Date;
   outPath: string;
   seenPath: string;
+  searchStatePath?: string;
   now?: Date;
   runner?: SubprocessRunner;
   reportError?: (message: string) => void;
@@ -45,6 +49,11 @@ export class AllXSourcesFailedError extends AggregateError {
     );
     this.name = "AllXSourcesFailedError";
   }
+}
+
+interface XSearchState {
+  version: 1;
+  searches: Record<string, { searched_through: string }>;
 }
 
 const normalizedOutputSchema = {
@@ -95,6 +104,11 @@ export async function fetchXSources(
   const now = options.now ?? new Date();
   const runner = options.runner ?? runSubprocess;
   const xSources = options.sources.filter((source) => source.type === "x");
+  const searchStatePath =
+    options.searchStatePath ??
+    join(dirname(options.seenPath), "cache", "x-search-state.json");
+  const searchState = await loadXSearchState(searchStatePath);
+  let searchStateChanged = false;
   const seen = await loadSeenRecords(options.seenPath, now);
   const staged = await readJsonLines<NormalizedItem>(options.outPath);
   const knownUrls = new Set(staged.map((item) => fingerprintUrl(item.url)));
@@ -103,11 +117,24 @@ export async function fetchXSources(
   const failed: FetchXResult["failed"] = [];
 
   for (const [index, source] of xSources.entries()) {
-    try {
-      const items = await fetchSource(source, options.since, now, runner);
+    const searchKey = createSearchKey(source);
+    const effectiveSince = latestDate(
+      options.since,
+      searchState.searches[searchKey]?.searched_through,
+    );
+    if (effectiveSince >= now) {
       succeeded.push(source.id);
+      continue;
+    }
+    try {
+      const items = await fetchSource(source, effectiveSince, now, runner);
+      succeeded.push(source.id);
+      searchState.searches[searchKey] = {
+        searched_through: now.toISOString(),
+      };
+      searchStateChanged = true;
       for (const item of items) {
-        if (new Date(item.published_at) <= options.since) {
+        if (new Date(item.published_at) <= effectiveSince) {
           continue;
         }
         const fingerprint = fingerprintUrl(item.url);
@@ -125,7 +152,13 @@ export async function fetchXSources(
           failed.push({ source: unavailableSource.id, error: failure.message });
         }
         options.reportError?.(failure.instruction);
-        await appendJsonLines(options.outPath, additions);
+        await commitXResults(
+          options.outPath,
+          additions,
+          searchStatePath,
+          searchState,
+          searchStateChanged,
+        );
         return {
           items: additions,
           succeeded,
@@ -141,8 +174,66 @@ export async function fetchXSources(
   if (xSources.length > 0 && succeeded.length === 0) {
     throw new AllXSourcesFailedError(failed);
   }
-  await appendJsonLines(options.outPath, additions);
+  await commitXResults(
+    options.outPath,
+    additions,
+    searchStatePath,
+    searchState,
+    searchStateChanged,
+  );
   return { items: additions, succeeded, failed };
+}
+
+async function commitXResults(
+  outPath: string,
+  additions: readonly NormalizedItem[],
+  statePath: string,
+  state: XSearchState,
+  stateChanged: boolean,
+): Promise<void> {
+  await appendJsonLines(outPath, additions);
+  if (stateChanged) {
+    await writeTextAtomic(statePath, `${JSON.stringify(state, null, 2)}\n`);
+  }
+}
+
+async function loadXSearchState(path: string): Promise<XSearchState> {
+  const text = await readTextIfExists(path);
+  if (text === undefined) return { version: 1, searches: {} };
+  const value: unknown = JSON.parse(text);
+  if (!isRecord(value) || value.version !== 1 || !isRecord(value.searches)) {
+    throw new Error(`Invalid X search state: ${path}`);
+  }
+  const searches: XSearchState["searches"] = {};
+  for (const [key, entry] of Object.entries(value.searches)) {
+    if (
+      !isRecord(entry) ||
+      typeof entry.searched_through !== "string" ||
+      Number.isNaN(Date.parse(entry.searched_through))
+    ) {
+      throw new Error(`Invalid X search state entry: ${key}`);
+    }
+    searches[key] = {
+      searched_through: new Date(entry.searched_through).toISOString(),
+    };
+  }
+  return { version: 1, searches };
+}
+
+function createSearchKey(source: SourceDefinition): string {
+  const descriptor = source.query
+    ? { query: source.query.trim(), maxResults: source.maxResults }
+    : {
+        handle: source.handle?.trim().toLowerCase(),
+        maxResults: source.maxResults,
+      };
+  return createHash("sha256").update(JSON.stringify(descriptor)).digest("hex");
+}
+
+function latestDate(base: Date, checkpoint?: string): Date {
+  if (!checkpoint) return base;
+  const searchedThrough = new Date(checkpoint);
+  return searchedThrough > base ? searchedThrough : base;
 }
 
 async function fetchSource(
@@ -154,7 +245,7 @@ async function fetchSource(
   const args = [
     "--no-auto-update",
     "-p",
-    buildPrompt(source, since),
+    buildPrompt(source, since, now),
     "--json-schema",
     JSON.stringify(normalizedOutputSchema),
   ];
@@ -175,12 +266,12 @@ async function fetchSource(
   return [];
 }
 
-function buildPrompt(source: SourceDefinition, since: Date): string {
+function buildPrompt(source: SourceDefinition, since: Date, now: Date): string {
   const target = source.query
     ? `the tracked topic ${JSON.stringify(source.name)}`
     : `the X account @${source.handle}`;
   return [
-    `Search X for high-signal posts from or directly about ${target} published after ${since.toISOString()}.`,
+    `Search X for high-signal posts from or directly about ${target} published after ${since.toISOString()} and through ${now.toISOString()}.`,
     ...(source.query ? [`Use this exact X search query: ${source.query}`] : []),
     ...(source.maxResults
       ? [

@@ -92,6 +92,8 @@ Status: complete
   `--json-schema`; verified against the locally installed CLI)
 - Searches X posts and topics from `sources.yaml`; topic expansion (people,
   products, repos) goes through the same channel
+- Persistent per-handle/query search cursors skip completed time ranges;
+  successful sources advance independently while failed sources retry
 - Schema-validate the agent output with one retry
 - Missing or logged-out CLI: disable the category gracefully with
   install/login instructions

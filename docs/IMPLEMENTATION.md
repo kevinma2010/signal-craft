@@ -44,8 +44,9 @@ conversational prompts; never depend on host-specific tools for core flow.
 ├── items/             # permanent archive of all processed items
 │   └── YYYY-MM.jsonl
 ├── cache/
-│   ├── transcripts/   # transcripts and pre-summaries, keyed by item id
-│   └── translations/  # full-text translations, keyed by item id + language
+│   ├── x-search-state.json # successful search high-water marks by query fingerprint
+│   ├── transcripts/        # transcripts and pre-summaries, keyed by item id
+│   └── translations/       # full-text translations, keyed by item id + language
 └── digests/           # generated briefings, YYYY-MM-DD.md
 ```
 
@@ -77,8 +78,8 @@ and the Phase 3 searchable archive. Retention is per type:
   full (original text included).
 - `seen.jsonl` — pruned: fingerprints older than 90 days are dropped (the
   fetch lookback cap is 30 days, so older fingerprints can never match).
-- `cache/` (transcripts, pre-summaries, translations) — permanent. These
-  cost money or tokens to produce and are immutable; never regenerate them.
+- `cache/` (X search cursors, transcripts, pre-summaries, translations) —
+  permanent. These prevent repeated paid or token-consuming work.
 - `digests/` — permanent.
 
 ### State Versioning
@@ -272,12 +273,20 @@ can search posts and topics broadly without scraping:
 - The script runs Grok Build in headless print mode (`grok -p`) with a
   search prompt and `--json-schema`. The script also validates returned JSON
   locally and retries malformed output once.
+- Each handle or exact query has a configuration fingerprint and persistent
+  `searched_through` cursor. A later run searches only the uncovered time
+  range; an already completed range does not start Grok again. Successful
+  sources advance independently, failed sources retry, and query or result
+  limit changes create a new fingerprint.
+- Search results are appended before cursors are atomically committed. A
+  crash may repeat the final search, but cannot advance a cursor past data
+  that was never written.
 - Post URLs, authors, and timestamps are preserved as evidence links.
 
 Grok Build is also the engine for topic discovery: expanding a tracked topic
 into related people, products, and repositories.
 
-Authentication is handled by the CLI itself (`grok-build login`, a browser
+Authentication is handled by the CLI itself (`grok login`, a browser
 sign-in with a SuperGrok or X Premium+ account; the token is stored
 locally). SignalCraft never sees or stores these credentials.
 
