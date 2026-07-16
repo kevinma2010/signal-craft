@@ -1,7 +1,5 @@
 # File Manifest
 
-- `IMPLEMENTATION_PLAN.md` — temporary task #10 implementation tracker
-
 - `.claude-plugin/plugin.json`
 - `.github/workflows/ci.yml`
 - `.gitignore`
@@ -34,6 +32,7 @@
 - `scripts/fetch-rss.ts`
 - `scripts/fetch-github.ts`
 - `scripts/fetch-x.ts`
+- `scripts/fetch-x.test.ts`
 - `scripts/fetch-youtube.ts`
 - `scripts/lib/archive.test.ts`
 - `scripts/lib/archive.ts`

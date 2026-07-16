@@ -12,6 +12,7 @@ const INSTALL_INSTRUCTION =
   "Install Grok Build with `curl -fsSL https://x.ai/cli/install.sh | bash`, then run `grok login`.";
 const LOGIN_INSTRUCTION = "Run `grok login`, then retry X collection.";
 const CONTENT_STATUSES = ["complete", "excerpt", "summary", "unknown"] as const;
+const DEFAULT_GROK_TIMEOUT_MS = 120_000;
 
 export interface SubprocessResult {
   exitCode: number;
@@ -34,6 +35,7 @@ export interface FetchXOptions {
   manageSearchState?: boolean;
   now?: Date;
   runner?: SubprocessRunner;
+  grokTimeoutMs?: number;
   reportError?: (message: string) => void;
 }
 
@@ -112,7 +114,18 @@ export async function fetchXSources(
   options: FetchXOptions,
 ): Promise<FetchXResult> {
   const now = options.now ?? new Date();
-  const runner = options.runner ?? runSubprocess;
+  const grokTimeoutMs = requirePositiveTimeout(
+    options.grokTimeoutMs ?? DEFAULT_GROK_TIMEOUT_MS,
+  );
+  const injectedRunner = options.runner;
+  const runner: SubprocessRunner = injectedRunner
+    ? (command, args) =>
+        withTimeout(
+          injectedRunner(command, args),
+          grokTimeoutMs,
+          () => new GrokTimeoutError(grokTimeoutMs),
+        )
+    : (command, args) => runSubprocess(command, args, grokTimeoutMs);
   const xSources = options.sources.filter((source) => source.type === "x");
   const searchStatePath =
     options.searchStatePath ??
@@ -290,6 +303,24 @@ async function fetchSource(
   return [];
 }
 
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  createError: () => Error,
+): Promise<T> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_resolve, reject) => {
+        timeout = setTimeout(() => reject(createError()), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeout !== undefined) clearTimeout(timeout);
+  }
+}
+
 function buildPrompt(source: SourceDefinition, since: Date, now: Date): string {
   const targetInstruction = source.query
     ? `Search X for high-signal posts from or directly about the tracked topic ${JSON.stringify(source.name)} published after ${since.toISOString()} and through ${now.toISOString()}. Use this exact X search query: ${source.query}.`
@@ -438,6 +469,7 @@ function validateHandlePost(
 async function runSubprocess(
   command: string,
   args: readonly string[],
+  timeoutMs: number,
 ): Promise<SubprocessResult> {
   const executable = resolveExecutable(command);
   if (!executable) {
@@ -452,12 +484,29 @@ async function runSubprocess(
     stdout: "pipe",
     stderr: "pipe",
   });
-  const [exitCode, stdout, stderr] = await Promise.all([
+  const completed = Promise.all([
     process.exited,
     new Response(process.stdout).text(),
     new Response(process.stderr).text(),
   ]);
-  return { exitCode, stdout, stderr };
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const [exitCode, stdout, stderr] = await Promise.race([
+      completed,
+      new Promise<never>((_resolve, reject) => {
+        timeout = setTimeout(() => {
+          void (async () => {
+            process.kill();
+            await process.exited;
+            throw new GrokTimeoutError(timeoutMs);
+          })().catch(reject);
+        }, timeoutMs);
+      }),
+    ]);
+    return { exitCode, stdout, stderr };
+  } finally {
+    if (timeout !== undefined) clearTimeout(timeout);
+  }
 }
 
 class GrokExecutionError extends Error {
@@ -466,6 +515,12 @@ class GrokExecutionError extends Error {
     readonly stderr: string,
   ) {
     super("Grok Build CLI failed");
+  }
+}
+
+class GrokTimeoutError extends Error {
+  constructor(timeoutMs: number) {
+    super(`Grok query timed out after ${timeoutMs}ms`);
   }
 }
 
@@ -543,6 +598,13 @@ function requireContentStatus(
     throw new Error(`${label} must be one of ${CONTENT_STATUSES.join(", ")}`);
   }
   return value as (typeof CONTENT_STATUSES)[number];
+}
+
+function requirePositiveTimeout(value: number): number {
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new RangeError("grokTimeoutMs must be a positive finite number");
+  }
+  return value;
 }
 
 function normalizeHandle(value: string | undefined): string {

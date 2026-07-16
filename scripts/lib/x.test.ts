@@ -427,6 +427,23 @@ describe("fetchXSources", () => {
     expect(calls).toBe(2);
   });
 
+  test("fails a source when the Grok query exceeds its timeout", async () => {
+    const pathOptions = await paths();
+    const runner: SubprocessRunner = async () =>
+      await new Promise<never>(() => undefined);
+    const options = {
+      sources: [source],
+      since: new Date("2026-01-01T00:00:00Z"),
+      runner,
+      grokTimeoutMs: 10,
+      ...pathOptions,
+    };
+
+    await expect(fetchXSources(options)).rejects.toThrow(
+      "All X sources failed",
+    );
+  }, 100);
+
   test("degrades with instructions when the CLI is missing", async () => {
     const pathOptions = await paths();
     const errors: string[] = [];

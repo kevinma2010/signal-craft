@@ -319,6 +319,9 @@ can search posts and topics broadly without scraping:
 - The script runs Grok Build in headless print mode (`grok -p`) with a
   search prompt and `--json-schema`. The script also validates returned JSON
   locally and retries malformed output once.
+- Each Grok query has a 120-second hard timeout. A login failure opens a
+  run-level circuit so remaining sources retain gaps without repeated CLI
+  attempts.
 - Each handle or exact query has a configuration fingerprint and persistent
   `searched_through` cursor. A later run searches only the uncovered time
   range; an already completed range does not start Grok again. Successful

@@ -159,7 +159,7 @@ Status: complete
 
 ### 11. End-to-end verification, packaging, install docs
 
-Status: in progress
+Status: complete
 
 - Produce the first real briefing against the real source pack, exercising
   the full chain: fetch → transcribe → pre-summarize → rank → cluster →
@@ -169,5 +169,5 @@ Status: in progress
   directory or plugin install, external binaries, API keys)
 - Completed: plugin manifest validation, Grok account-search smoke, external
   binary checks, deterministic unit and E2E suite
-- Remaining: one bounded real briefing across the full content pipeline when
-  optional transcription and translation credentials are available
+- Completed: bounded real briefing with archive reuse, native-first transcript
+  decisions, DeepSeek localization cache, ranking, clustering, and Run Report

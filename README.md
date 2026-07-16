@@ -247,7 +247,6 @@ signal-craft/
 ├── CLAUDE.md
 ├── PROMPTS.md
 ├── EXAMPLES.md
-├── IMPLEMENTATION_PLAN.md
 ├── sources.default.yaml
 ├── fixtures/
 │   ├── README.md
@@ -261,6 +260,7 @@ signal-craft/
 │   ├── fetch-github.ts
 │   ├── fetch-youtube.ts
 │   ├── fetch-x.ts
+│   ├── fetch-x.test.ts
 │   └── lib/
 │       ├── archive.ts
 │       ├── cli.ts

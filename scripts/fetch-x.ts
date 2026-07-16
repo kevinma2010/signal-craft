@@ -37,6 +37,7 @@ import { createXApiSource, normalizeXApiPost } from "./lib/x-api-normalize";
 export async function main(
   argv = Bun.argv.slice(2),
   now = new Date(),
+  dependencies: { fetchGrokSources?: typeof fetchXSources } = {},
 ): Promise<void> {
   const args = parseConnectorArgs(argv, now);
   const dataDirectory = dirname(args.config);
@@ -52,6 +53,8 @@ export async function main(
   const paidIds = new Set(config.enabled ? config.sourceIds : []);
   const knownIds = new Set(xSources.map((source) => source.id));
   const xApiRunUsage: XApiRunUsage = { postReads: 0, usd: 0 };
+  const fetchGrokSources = dependencies.fetchGrokSources ?? fetchXSources;
+  let grokCircuitOpen: string | undefined;
   for (const id of paidIds) {
     if (!knownIds.has(id)) {
       console.error(`X API source id is not configured: ${id}`);
@@ -64,6 +67,11 @@ export async function main(
       await migrateLegacyGrokCheckpoint(dataDirectory, source, now);
     }
     const paid = paidIds.has(source.id);
+    if (!paid && grokCircuitOpen) {
+      failed += 1;
+      console.error(`${source.name}: ${grokCircuitOpen}`);
+      continue;
+    }
     if (paid && !(await isPaidSourceDue(dataDirectory, source, now))) continue;
     let result: CommittedCollectionResult;
     try {
@@ -93,7 +101,7 @@ export async function main(
             through: now,
             outPath: args.out,
             collect: async ({ since }) => {
-              const fetched = await fetchXSources({
+              const fetched = await fetchGrokSources({
                 sources: [source],
                 since,
                 outPath: args.out,
@@ -103,6 +111,7 @@ export async function main(
                 writeOutput: false,
                 reportError: (message) => console.error(message),
               });
+              if (fetched.degraded) grokCircuitOpen = fetched.degraded;
               if (fetched.failed.length > 0 || fetched.degraded) {
                 const error =
                   fetched.degraded ??
