@@ -1,6 +1,7 @@
 import { XMLParser } from "fast-xml-parser";
 import { appendJsonLines, readJsonLines } from "./jsonl";
 import { hasSeen, loadSeenRecords } from "./seen";
+import { getSourceMetadata } from "./sources";
 import {
   type CommandRunner,
   type Fetcher,
@@ -151,7 +152,10 @@ export function parseYouTubeFeed(
         fetched_at: fetchedAt.toISOString(),
         text: description,
         transcript_provider: "none",
-        extra: videoId ? { video_id: videoId } : {},
+        extra: {
+          ...getSourceMetadata(source),
+          ...(videoId ? { video_id: videoId } : {}),
+        },
       };
     },
   );

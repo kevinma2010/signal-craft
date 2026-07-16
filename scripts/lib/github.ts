@@ -1,5 +1,6 @@
 import { appendJsonLines, readJsonLines } from "./jsonl";
 import { hasSeen, loadSeenRecords } from "./seen";
+import { getSourceMetadata } from "./sources";
 import type { NormalizedItem, SourceDefinition } from "./types";
 import { createItemId, fingerprintUrl } from "./url";
 
@@ -248,6 +249,7 @@ function normalizeRelease(
     text: optionalString(release.body),
     transcript_provider: "none",
     extra: {
+      ...getSourceMetadata(source),
       tag_name: tagName,
       prerelease: release.prerelease === true,
     },
@@ -290,6 +292,7 @@ function normalizeDiscussion(
     text: optionalString(discussion.body),
     transcript_provider: "none",
     extra: {
+      ...getSourceMetadata(source),
       author_association: association,
       category: isRecord(discussion.category)
         ? optionalString(discussion.category.name)

@@ -70,6 +70,7 @@ describe("fetchXSources", () => {
 
     expect(result.items).toHaveLength(1);
     expect(result.succeeded).toEqual([source.id]);
+    expect(result.items[0]?.extra.source_id).toBe(source.id);
     expect(calls[0]?.command).toBe("grok");
     expect(calls[0]?.args).toContain("-p");
     expect(calls[0]?.args).toContain("--json-schema");
@@ -97,6 +98,47 @@ describe("fetchXSources", () => {
 
     expect(result.items).toHaveLength(1);
     expect(result.succeeded).toEqual([source.id]);
+  });
+
+  test("uses an exact topic query and result limit in the prompt", async () => {
+    const pathOptions = await paths();
+    let prompt = "";
+    const runner: SubprocessRunner = async (_command, args) => {
+      const promptIndex = args.indexOf("-p");
+      prompt = args[promptIndex + 1] ?? "";
+      const payload = JSON.parse(validOutput()) as {
+        items: Array<Record<string, unknown>>;
+      };
+      payload.items.push({
+        ...payload.items[0],
+        url: "https://x.com/example/status/456",
+      });
+      return { exitCode: 0, stdout: JSON.stringify(payload), stderr: "" };
+    };
+
+    const result = await fetchXSources({
+      sources: [
+        {
+          id: "topic-coding-agents",
+          name: "Coding agents",
+          type: "x",
+          category: "topic",
+          weight: 1.2,
+          query: '("Claude Code" OR Codex) -is:retweet lang:en',
+          maxResults: 1,
+        },
+      ],
+      since: new Date("2026-01-01T00:00:00Z"),
+      runner,
+      ...pathOptions,
+    });
+
+    expect(prompt).toContain(
+      'Use this exact X search query: ("Claude Code" OR Codex) -is:retweet lang:en',
+    );
+    expect(prompt).toContain("Return at most 1 item");
+    expect(prompt).not.toContain("expand topic discovery");
+    expect(result.items).toHaveLength(1);
   });
 
   test("retries malformed structured output exactly once", async () => {

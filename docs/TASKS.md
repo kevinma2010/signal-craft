@@ -54,14 +54,16 @@ Status: complete
 
 ### 3. Default source pack `sources.default.yaml`
 
-Status: in progress — draft awaiting Kevin approval
+Status: complete
 
-- 10–20 high-quality, primarily English sources (official blogs and
-  changelogs, GitHub repos, YouTube channels, podcasts, X topics)
+- 93 curated entries: 31 RSS feeds, 4 GitHub repositories, 3 YouTube
+  channels, 37 X accounts, and 18 exact X topic queries
 - Evaluated against the DESIGN.md source policy (proximity to the work,
   originality, technical depth, noise level)
-- Draft proposed by the agent; curated and approved by Kevin
-- Schema covers type, URL/handle, weight, category
+- Kevin-curated first-hand-only policy; inactive, stale, repost, and
+  marketing-heavy sources excluded
+- Schema covers type, URL/handle/query, weight, category, tags, usage, tier,
+  and per-topic result limits
 
 ### 4. `fetch-github.ts`
 
@@ -132,7 +134,7 @@ Status: complete
 
 ### 10. End-to-end verification, packaging, install docs
 
-Status: pending — blocked by #3 approval
+Status: pending — ready
 
 - Produce the first real briefing against the real source pack, exercising
   the full chain: fetch → transcribe → pre-summarize → rank → cluster →

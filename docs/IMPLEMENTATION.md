@@ -60,6 +60,11 @@ weight overrides. Connectors merge the two at load time, so pack
 improvements reach existing users automatically while user intent is never
 overwritten.
 
+The default pack stores ranking metadata (`weight`, `tier`, `tags`, and
+`usage`) alongside connector coordinates. X entries use either `handle` for
+account monitoring or an exact `query` plus `max_results` for topic search.
+Connectors copy ranking metadata into each normalized item's `extra` object.
+
 ### Data Lifecycle
 
 All content data persists locally — it feeds the future local reading view

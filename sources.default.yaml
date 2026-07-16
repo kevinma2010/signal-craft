@@ -1,113 +1,1163 @@
 version: 1
 sources:
+  - id: simon-willison
+    name: Simon Willison
+    type: rss
+    category: builder
+    weight: 1.2
+    url: https://simonwillison.net/atom/everything/
+    tags:
+      - ai-news
+      - eng
+      - agent
+      - ai-coding
+    usage: daily
+    tier: 1
+  - id: latent-space
+    name: Latent Space (swyx)
+    type: rss
+    category: podcast
+    weight: 1.2
+    url: https://www.latent.space/feed
+    tags:
+      - ai-news
+      - agent
+      - eng
+      - ai-coding
+    usage: both
+    tier: 1
   - id: openai-news
     name: OpenAI News
     type: rss
     category: official
     weight: 1.2
     url: https://openai.com/news/rss.xml
-
-  - id: google-deepmind-blog
-    name: Google DeepMind Blog
+    tags:
+      - openai
+      - product
+      - ai-news
+    usage: daily
+    tier: 1
+  - id: anthropic-news
+    name: Anthropic News
     type: rss
-    category: research
+    category: official
+    weight: 1.2
+    url: https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_anthropic_news.xml
+    tags:
+      - claude
+      - product
+      - ai-news
+    usage: daily
+    tier: 1
+  - id: anthropic-engineering
+    name: Anthropic Engineering
+    type: rss
+    category: official
+    weight: 1.2
+    url: https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_anthropic_engineering.xml
+    tags:
+      - claude
+      - eng
+      - agent
+      - ai-coding
+    usage: longform
+    tier: 1
+  - id: google-deepmind-blog
+    name: Google DeepMind
+    type: rss
+    category: official
     weight: 1.2
     url: https://deepmind.google/blog/rss.xml
-
+    tags:
+      - ml-research
+      - product
+      - ai-news
+    usage: daily
+    tier: 1
+  - id: google-ai-blog
+    name: Google AI Blog
+    type: rss
+    category: official
+    weight: 1.2
+    url: https://blog.google/technology/ai/rss/
+    tags:
+      - ai-news
+      - product
+      - eng
+    usage: daily
+    tier: 1
   - id: hugging-face-blog
     name: Hugging Face Blog
     type: rss
     category: official
-    weight: 1.0
+    weight: 1.2
     url: https://huggingface.co/blog/feed.xml
-
-  - id: simon-willison
-    name: Simon Willison
+    tags:
+      - eng
+      - ml-research
+      - product
+      - open-source
+    usage: daily
+    tier: 1
+  - id: interconnects-nathan-lambert
+    name: Interconnects (Nathan Lambert)
+    type: rss
+    category: research
+    weight: 1.2
+    url: https://www.interconnects.ai/feed
+    tags:
+      - ml-research
+      - ai-news
+      - open-source
+    usage: both
+    tier: 1
+  - id: the-pragmatic-engineer-gergely-orosz
+    name: The Pragmatic Engineer (Gergely Orosz)
     type: rss
     category: builder
-    weight: 1.0
-    url: https://simonwillison.net/atom/everything/
-
+    weight: 1.2
+    url: https://newsletter.pragmaticengineer.com/feed
+    tags:
+      - eng
+      - product
+      - ai-coding
+    usage: both
+    tier: 1
+  - id: ai-hero-matt-pocock
+    name: AI Hero (Matt Pocock)
+    type: rss
+    category: builder
+    weight: 1.2
+    url: https://www.aihero.dev/rss.xml
+    tags:
+      - ai-coding
+      - eng
+      - agent
+      - workflow
+    usage: both
+    tier: 1
+  - id: armin-ronacher-lucumr
+    name: Armin Ronacher (lucumr)
+    type: rss
+    category: builder
+    weight: 1.2
+    url: https://lucumr.pocoo.org/feed.atom
+    tags:
+      - eng
+      - ai-coding
+      - agent
+      - tools
+    usage: both
+    tier: 1
+  - id: andrej-karpathy
+    name: Andrej Karpathy
+    type: rss
+    category: research
+    weight: 1.2
+    url: https://karpathy.bearblog.dev/feed/
+    tags:
+      - ml-research
+      - eng
+      - agent
+    usage: longform
+    tier: 1
+  - id: sebastian-raschka-ahead-of-ai
+    name: Sebastian Raschka (Ahead of AI)
+    type: rss
+    category: research
+    weight: 0.9
+    url: https://magazine.sebastianraschka.com/feed
+    tags:
+      - ml-research
+    usage: longform
+    tier: 2
+  - id: lilian-weng-lil-log
+    name: Lilian Weng (Lil'Log)
+    type: rss
+    category: research
+    weight: 0.9
+    url: https://lilianweng.github.io/index.xml
+    tags:
+      - ml-research
+      - agent
+    usage: longform
+    tier: 2
+  - id: ethan-mollick-one-useful-thing
+    name: Ethan Mollick (One Useful Thing)
+    type: rss
+    category: builder
+    weight: 1.2
+    url: https://www.oneusefulthing.org/feed
+    tags:
+      - product
+      - ai-news
+      - workflow
+    usage: longform
+    tier: 1
+  - id: import-ai-jack-clark
+    name: Import AI (Jack Clark)
+    type: rss
+    category: policy
+    weight: 0.9
+    url: https://importai.substack.com/feed
+    tags:
+      - ai-news
+      - ml-research
+      - policy
+    usage: longform
+    tier: 2
+  - id: anthropic-research
+    name: Anthropic Research
+    type: rss
+    category: official
+    weight: 0.9
+    url: https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_anthropic_research.xml
+    tags:
+      - claude
+      - ml-research
+    usage: longform
+    tier: 2
+  - id: hamel-husain
+    name: Hamel Husain
+    type: rss
+    category: builder
+    weight: 1.2
+    url: https://hamel.dev/index.xml
+    tags:
+      - eng
+      - agent
+      - eval
+    usage: longform
+    tier: 1
+  - id: eugene-yan
+    name: Eugene Yan
+    type: rss
+    category: research
+    weight: 0.9
+    url: https://eugeneyan.com/rss/
+    tags:
+      - eng
+      - ml-research
+    usage: longform
+    tier: 2
+  - id: stratechery-ben-thompson
+    name: Stratechery (Ben Thompson)
+    type: rss
+    category: builder
+    weight: 0.9
+    url: https://stratechery.com/feed/
+    tags:
+      - ai-news
+      - business
+    usage: longform
+    tier: 2
+  - id: ai-as-normal-technology
+    name: AI as Normal Technology
+    type: rss
+    category: policy
+    weight: 0.9
+    url: https://www.normaltech.ai/feed
+    tags:
+      - ai-news
+      - policy
+    usage: longform
+    tier: 2
+  - id: remotion-blog
+    name: Remotion Blog
+    type: rss
+    category: creative
+    weight: 1.2
+    url: https://www.remotion.dev/blog/rss.xml
+    tags:
+      - remotion
+      - video
+      - creative
+      - eng
+      - product-media
+    usage: both
+    tier: 1
+  - id: replicate-blog
+    name: Replicate Blog
+    type: rss
+    category: creative
+    weight: 1.2
+    url: https://replicate.com/blog/rss
+    tags:
+      - image
+      - video
+      - creative
+      - eng
+      - model-eval
+    usage: both
+    tier: 1
+  - id: qwen-blog-alibaba
+    name: Qwen Blog (Alibaba)
+    type: rss
+    category: official
+    weight: 1.2
+    url: https://qwenlm.github.io/blog/index.xml
+    tags:
+      - open-source
+      - cn-lab
+      - qwen
+      - product
+      - agent
+    usage: both
+    tier: 1
+  - id: aider
+    name: Aider
+    type: rss
+    category: framework
+    weight: 1.2
+    url: https://aider.chat/feed.xml
+    tags:
+      - agent
+      - ai-coding
+      - eng
+      - tools
+      - framework
+    usage: both
+    tier: 1
+  - id: llamaindex-blog
+    name: LlamaIndex Blog
+    type: rss
+    category: framework
+    weight: 1.2
+    url: https://medium.com/feed/llamaindex-blog
+    tags:
+      - agent
+      - rag
+      - framework
+      - eng
+      - tools
+    usage: both
+    tier: 1
+  - id: semantic-kernel-microsoft
+    name: Semantic Kernel (Microsoft)
+    type: rss
+    category: framework
+    weight: 0.9
+    url: https://devblogs.microsoft.com/semantic-kernel/feed/
+    tags:
+      - agent
+      - framework
+      - eng
+      - tools
+    usage: both
+    tier: 2
+  - id: n8n-blog
+    name: n8n Blog
+    type: rss
+    category: builder
+    weight: 0.9
+    url: https://blog.n8n.io/rss/
+    tags:
+      - agent
+      - workflow
+      - tools
+      - eng
+      - product
+    usage: both
+    tier: 2
+  - id: vercel-blog
+    name: Vercel Blog
+    type: rss
+    category: framework
+    weight: 0.9
+    url: https://vercel.com/blog/rss.xml
+    tags:
+      - eng
+      - tools
+      - ai-coding
+      - framework
+      - product
+    usage: both
+    tier: 2
   - id: practical-ai
     name: Practical AI
     type: rss
     category: podcast
     weight: 0.9
     url: https://changelog.com/practicalai/feed
-
-  - id: latent-space
-    name: Latent Space
-    type: rss
-    category: podcast
-    weight: 0.9
-    url: https://www.latent.space/feed
-
+    tags:
+      - podcast
+      - ai-news
+    usage: both
+    tier: 2
   - id: openai-python
     name: OpenAI Python SDK
     type: github
     category: release
     weight: 1.1
     url: https://github.com/openai/openai-python
-
   - id: anthropic-sdk-python
     name: Anthropic Python SDK
     type: github
     category: release
     weight: 1.1
     url: https://github.com/anthropics/anthropic-sdk-python
-
   - id: hugging-face-transformers
     name: Hugging Face Transformers
     type: github
     category: release
     weight: 1.1
     url: https://github.com/huggingface/transformers
-
   - id: ollama
     name: Ollama
     type: github
     category: release
-    weight: 1.0
+    weight: 1
     url: https://github.com/ollama/ollama
-
   - id: openai-youtube
     name: OpenAI YouTube
     type: youtube
     category: official
     weight: 1.1
     url: https://www.youtube.com/channel/UCXZCJLdBC09xxGZ6gcdrc6A
-
   - id: anthropic-youtube
     name: Anthropic YouTube
     type: youtube
     category: official
     weight: 1.1
     url: https://www.youtube.com/channel/UCrDwWp7EBBv4NwvScIpBDOA
-
   - id: ai-engineer-youtube
     name: AI Engineer YouTube
     type: youtube
     category: conference
-    weight: 1.0
+    weight: 1
     url: https://www.youtube.com/channel/UCLKPca3kwwd-B59HNr-_lvA
-
+  - id: andrew-ng-x
+    name: Andrew Ng
+    type: x
+    category: builder
+    weight: 1.2
+    handle: AndrewYNg
+    tags:
+      - ai-news
+      - agent
+      - ai-coding
+      - product
+      - education
+    usage: both
+    tier: 1
+  - id: andrej-karpathy-x
+    name: Andrej Karpathy (X)
+    type: x
+    category: research
+    weight: 1.2
+    handle: karpathy
+    tags:
+      - ml-research
+      - eng
+      - agent
+      - model-taste
+    usage: both
+    tier: 1
+  - id: boris-cherny-x
+    name: Boris Cherny
+    type: x
+    category: builder
+    weight: 1.2
+    handle: bcherny
+    tags:
+      - claude
+      - ai-coding
+      - agent
+      - product
+    usage: daily
+    tier: 1
+  - id: thariq-claude-code-x
+    name: Thariq (Claude Code)
+    type: x
+    category: builder
+    weight: 0.9
+    handle: trq212
+    tags:
+      - claude
+      - ai-coding
+      - agent
+    usage: daily
+    tier: 2
+  - id: cursor-x
+    name: Cursor
+    type: x
+    category: builder
+    weight: 1.2
+    handle: cursor_ai
+    tags:
+      - ai-coding
+      - agent
+      - product
+    usage: daily
+    tier: 1
   - id: openai-developers-x
-    name: OpenAI Developers on X
+    name: OpenAI Developers
     type: x
-    category: official
-    weight: 1.1
+    category: builder
+    weight: 1.2
     handle: OpenAIDevs
-
-  - id: anthropic-x
-    name: Anthropic on X
+    tags:
+      - openai
+      - eng
+      - product
+      - ai-coding
+    usage: daily
+    tier: 1
+  - id: claude-developers-x
+    name: Claude Developers
+    type: x
+    category: builder
+    weight: 1.2
+    handle: ClaudeDevs
+    tags:
+      - claude
+      - eng
+      - product
+      - ai-coding
+      - agent
+    usage: daily
+    tier: 1
+  - id: santiago-svpino-x
+    name: Santiago (svpino)
+    type: x
+    category: research
+    weight: 1.2
+    handle: svpino
+    tags:
+      - eng
+      - ml-research
+      - agent
+      - ai-coding
+    usage: daily
+    tier: 1
+  - id: matt-pocock-x
+    name: Matt Pocock (X)
+    type: x
+    category: builder
+    weight: 1.2
+    handle: mattpocockuk
+    tags:
+      - ai-coding
+      - eng
+      - agent
+      - workflow
+    usage: daily
+    tier: 1
+  - id: armin-ronacher-x
+    name: Armin Ronacher (X)
+    type: x
+    category: builder
+    weight: 1.2
+    handle: mitsuhiko
+    tags:
+      - eng
+      - ai-coding
+      - agent
+      - tools
+    usage: daily
+    tier: 1
+  - id: remotion-x
+    name: Remotion
+    type: x
+    category: creative
+    weight: 1.2
+    handle: Remotion
+    tags:
+      - remotion
+      - video
+      - creative
+      - eng
+      - product-media
+    usage: daily
+    tier: 1
+  - id: jonny-burger-x
+    name: Jonny Burger
+    type: x
+    category: creative
+    weight: 1.2
+    handle: JNYBGR
+    tags:
+      - remotion
+      - video
+      - creative
+      - eng
+    usage: both
+    tier: 1
+  - id: runway-x
+    name: Runway
+    type: x
+    category: creative
+    weight: 1.2
+    handle: runwayml
+    tags:
+      - video
+      - creative
+      - product-media
+      - aigc
+    usage: daily
+    tier: 1
+  - id: luma-ai-x
+    name: Luma AI
+    type: x
+    category: creative
+    weight: 1.2
+    handle: LumaLabsAI
+    tags:
+      - video
+      - creative
+      - product-media
+      - aigc
+    usage: daily
+    tier: 1
+  - id: elevenlabs-x
+    name: ElevenLabs
+    type: x
+    category: creative
+    weight: 0.9
+    handle: ElevenLabs
+    tags:
+      - audio
+      - creative
+      - product-media
+      - aigc
+    usage: daily
+    tier: 2
+  - id: fofr-x
+    name: fofr
+    type: x
+    category: creative
+    weight: 1.2
+    handle: fofrAI
+    tags:
+      - image
+      - video
+      - creative
+      - eng
+      - model-eval
+    usage: both
+    tier: 1
+  - id: deepseek-x
+    name: DeepSeek
     type: x
     category: official
-    weight: 1.1
-    handle: AnthropicAI
-
-  - id: google-deepmind-x
-    name: Google DeepMind on X
+    weight: 1.2
+    handle: deepseek_ai
+    tags:
+      - open-source
+      - cn-lab
+      - deepseek
+      - product
+      - ai-coding
+    usage: daily
+    tier: 1
+  - id: qwen-alibaba-x
+    name: Qwen (Alibaba)
     type: x
     category: official
-    weight: 1.1
-    handle: googledeepmind
+    weight: 1.2
+    handle: Alibaba_Qwen
+    tags:
+      - open-source
+      - cn-lab
+      - qwen
+      - product
+      - agent
+    usage: daily
+    tier: 1
+  - id: kimi-moonshot-x
+    name: Kimi (Moonshot)
+    type: x
+    category: official
+    weight: 1.2
+    handle: Kimi_Moonshot
+    tags:
+      - open-source
+      - cn-lab
+      - kimi
+      - product
+      - agent
+    usage: daily
+    tier: 1
+  - id: kimi-developers-x
+    name: Kimi Developers
+    type: x
+    category: official
+    weight: 1.2
+    handle: KimiDevs
+    tags:
+      - open-source
+      - cn-lab
+      - kimi
+      - eng
+      - ai-coding
+    usage: daily
+    tier: 1
+  - id: z-ai-zhipu-glm-x
+    name: Z.ai / Zhipu (GLM)
+    type: x
+    category: official
+    weight: 1.2
+    handle: Zai_org
+    tags:
+      - open-source
+      - cn-lab
+      - glm
+      - zhipu
+      - product
+      - ai-coding
+    usage: daily
+    tier: 1
+  - id: zcode-zhipu-coding-ide-x
+    name: ZCode (Zhipu coding IDE)
+    type: x
+    category: official
+    weight: 0.9
+    handle: zcode_ai
+    tags:
+      - cn-lab
+      - glm
+      - zhipu
+      - ai-coding
+      - tools
+    usage: daily
+    tier: 2
+  - id: minimax-x
+    name: MiniMax
+    type: x
+    category: official
+    weight: 1.2
+    handle: MiniMax_AI
+    tags:
+      - open-source
+      - cn-lab
+      - minimax
+      - product
+      - video
+    usage: daily
+    tier: 1
+  - id: hailuo-ai-minimax-video-x
+    name: Hailuo AI (MiniMax video)
+    type: x
+    category: official
+    weight: 0.9
+    handle: Hailuo_AI
+    tags:
+      - video
+      - creative
+      - cn-lab
+      - minimax
+      - product-media
+    usage: daily
+    tier: 2
+  - id: yi-01-ai-x
+    name: Yi / 01.AI
+    type: x
+    category: official
+    weight: 0.9
+    handle: 01AI_Yi
+    tags:
+      - open-source
+      - cn-lab
+      - yi
+      - product
+    usage: daily
+    tier: 2
+  - id: modelscope-x
+    name: ModelScope
+    type: x
+    category: official
+    weight: 0.9
+    handle: ModelScope2022
+    tags:
+      - open-source
+      - cn-lab
+      - modelscope
+    usage: daily
+    tier: 2
+  - id: langchain-x
+    name: LangChain
+    type: x
+    category: framework
+    weight: 1.2
+    handle: LangChain
+    tags:
+      - agent
+      - framework
+      - eng
+      - tools
+    usage: daily
+    tier: 1
+  - id: harrison-chase-x
+    name: Harrison Chase
+    type: x
+    category: framework
+    weight: 1.2
+    handle: hwchase17
+    tags:
+      - agent
+      - framework
+      - eng
+      - tools
+    usage: both
+    tier: 1
+  - id: llamaindex-x
+    name: LlamaIndex
+    type: x
+    category: framework
+    weight: 1.2
+    handle: llama_index
+    tags:
+      - agent
+      - rag
+      - framework
+      - eng
+      - tools
+    usage: daily
+    tier: 1
+  - id: pydantic-x
+    name: Pydantic
+    type: x
+    category: framework
+    weight: 1.2
+    handle: pydantic
+    tags:
+      - agent
+      - framework
+      - eng
+      - tools
+      - python
+    usage: daily
+    tier: 1
+  - id: crewai-x
+    name: CrewAI
+    type: x
+    category: framework
+    weight: 0.9
+    handle: crewAIInc
+    tags:
+      - agent
+      - framework
+      - eng
+      - tools
+    usage: daily
+    tier: 2
+  - id: browserbase-x
+    name: Browserbase
+    type: x
+    category: builder
+    weight: 1.2
+    handle: browserbase
+    tags:
+      - agent
+      - tools
+      - eng
+      - browser
+    usage: daily
+    tier: 1
+  - id: browser-use-x
+    name: Browser Use
+    type: x
+    category: builder
+    weight: 1.2
+    handle: browser_use
+    tags:
+      - agent
+      - tools
+      - eng
+      - browser
+    usage: daily
+    tier: 1
+  - id: continue-x
+    name: Continue
+    type: x
+    category: builder
+    weight: 0.9
+    handle: continuedev
+    tags:
+      - ai-coding
+      - agent
+      - tools
+      - eng
+    usage: daily
+    tier: 2
+  - id: n8n-x
+    name: n8n
+    type: x
+    category: builder
+    weight: 0.9
+    handle: n8n_io
+    tags:
+      - agent
+      - workflow
+      - tools
+      - eng
+    usage: daily
+    tier: 2
+  - id: jim-fan-x
+    name: Jim Fan
+    type: x
+    category: research
+    weight: 1.2
+    handle: DrJimFan
+    tags:
+      - ml-research
+      - product
+      - robotics
+      - agent
+    usage: daily
+    tier: 1
+  - id: swyx-x
+    name: swyx (X)
+    type: x
+    category: builder
+    weight: 0.9
+    handle: swyx
+    tags:
+      - ai-news
+      - eng
+      - agent
+      - ai-coding
+    usage: daily
+    tier: 2
+  - id: topic-coding-agents
+    name: Coding agents
+    type: x
+    category: topic
+    weight: 1.2
+    query: ("Claude Code" OR "coding agent" OR "agentic coding" OR Cursor OR Codex OR OpenCode OR Devin) -is:retweet lang:en
+    tags:
+      - ai-coding
+      - agent
+    usage: daily
+    tier: 1
+    max_results: 20
+  - id: topic-agent-loops
+    name: Agent loops / harness
+    type: x
+    category: topic
+    weight: 1.2
+    query: ("loop engineering" OR "agent loop" OR "agent harness" OR "eval-driven" OR "self-verify" OR OpenClaw) -is:retweet lang:en
+    tags:
+      - agent
+      - eng
+      - ai-coding
+    usage: both
+    tier: 1
+    max_results: 15
+  - id: topic-model-releases
+    name: Frontier model releases
+    type: x
+    category: topic
+    weight: 1.2
+    query: ((Claude OR GPT OR Gemini OR Fable OR Mythos OR "open weight" OR "open-weight") (release OR released OR launching OR shipping OR announce OR announcing)) -is:retweet lang:en
+    tags:
+      - ai-news
+      - product
+      - model-eval
+    usage: daily
+    tier: 1
+    max_results: 20
+  - id: topic-product-eng-ai
+    name: AI product engineering
+    type: x
+    category: topic
+    weight: 1.2
+    query: ("forward deployed" OR FDE OR "AI engineer" OR "LLMOps" OR "agent evals" OR "context engineering") -is:retweet lang:en
+    tags:
+      - eng
+      - product
+      - agent
+    usage: both
+    tier: 1
+    max_results: 15
+  - id: topic-evals-harness
+    name: Evals & quality
+    type: x
+    category: topic
+    weight: 0.9
+    query: (LLM eval OR "agent eval" OR evals OR "benchmark agent" OR "agent harness" OR "pseudo-correctness") -is:retweet lang:en
+    tags:
+      - eval
+      - eng
+      - agent
+    usage: both
+    tier: 2
+    max_results: 10
+  - id: topic-indie-content-system
+    name: Indie / content systems
+    type: x
+    category: topic
+    weight: 0.9
+    query: ("content system" OR "second brain" OR "personal OS" OR "content pipeline" OR "indie hacker") (AI OR agent OR LLM) -is:retweet lang:en
+    tags:
+      - workflow
+      - product
+      - indie-dev
+    usage: both
+    tier: 2
+    max_results: 10
+  - id: topic-policy-geopolitics
+    name: AI policy & geopolitics
+    type: x
+    category: topic
+    weight: 1.2
+    query: ("export control" OR "export controls" OR "AI sovereignty" OR "chip ban" OR "semiconductor" OR "open weight" OR "open-weight" OR BIS OR "national security") (AI OR LLM OR Claude OR GPT OR GPU) -is:retweet lang:en
+    tags:
+      - policy
+      - ai-news
+    usage: both
+    tier: 1
+    max_results: 15
+  - id: topic-papers-research
+    name: Papers & primary research
+    type: x
+    category: topic
+    weight: 1.2
+    query: ((arxiv.org OR "we release" OR "we introduce" OR "our paper" OR "research preview") (agent OR LLM OR "language model" OR alignment OR eval OR harness)) -is:retweet lang:en
+    tags:
+      - ml-research
+      - papers
+      - agent
+    usage: both
+    tier: 1
+    max_results: 15
+  - id: topic-open-weights-infra
+    name: Open weights & infra politics
+    type: x
+    category: topic
+    weight: 0.9
+    query: ("open weights" OR "open-weight" OR "open model" OR "model weights" OR HuggingFace OR "AI Act" OR "compute cluster") (release OR policy OR restrict OR ban OR license) -is:retweet lang:en
+    tags:
+      - open-source
+      - policy
+      - product
+    usage: both
+    tier: 2
+    max_results: 10
+  - id: topic-remotion-programmatic-video
+    name: Remotion & code-to-video
+    type: x
+    category: topic
+    weight: 1.2
+    query: (Remotion OR "programmatic video" OR "React video" OR "code to video" OR "video in React") -is:retweet lang:en
+    tags:
+      - remotion
+      - video
+      - creative
+      - eng
+    usage: both
+    tier: 1
+    max_results: 15
+  - id: topic-ai-video-practice
+    name: AI video generation practice
+    type: x
+    category: topic
+    weight: 1.2
+    query: (("AI video" OR "gen video" OR Runway OR "Dream Machine" OR Luma OR Kling OR Seedance OR Sora OR "product video" OR "launch video") (workflow OR tutorial OR how-to OR pipeline OR prompt OR remotion)) -is:retweet lang:en
+    tags:
+      - video
+      - creative
+      - product-media
+      - aigc
+    usage: both
+    tier: 1
+    max_results: 15
+  - id: topic-ai-image-creative
+    name: AI image & brand creative
+    type: x
+    category: topic
+    weight: 1.2
+    query: (("AI image" OR "image gen" OR Midjourney OR Flux OR Seedream OR "Nano Banana" OR "brand kit" OR "product shot") (workflow OR pipeline OR prompt OR consistency OR "style guide")) -is:retweet lang:en
+    tags:
+      - image
+      - creative
+      - aigc
+      - product-media
+    usage: both
+    tier: 1
+    max_results: 12
+  - id: topic-ai-product-media
+    name: AI product marketing media
+    type: x
+    category: topic
+    weight: 1.2
+    query: (("product video" OR "launch video" OR "demo video" OR "changelog video" OR "marketing video" OR "explainer video") (AI OR Remotion OR Runway OR Luma OR ElevenLabs OR agent)) -is:retweet lang:en
+    tags:
+      - product-media
+      - video
+      - creative
+      - indie-dev
+    usage: both
+    tier: 1
+    max_results: 12
+  - id: topic-cn-open-models
+    name: CN open-weight model releases
+    type: x
+    category: topic
+    weight: 1.2
+    query: (DeepSeek OR Qwen OR "Qwen3" OR Kimi OR Moonshot OR MiniMax OR "01.AI" OR Yi- OR GLM OR ChatGLM OR "GLM-5" OR Zhipu OR "Z.ai" OR InternLM OR "open-weight" OR "open weights") (release OR released OR open-source OR "open source" OR HuggingFace OR ModelScope OR weights) -is:retweet
+    tags:
+      - open-source
+      - cn-lab
+      - product
+      - ai-news
+    usage: daily
+    tier: 1
+    max_results: 20
+  - id: topic-agent-frameworks
+    name: Agent frameworks & SDKs
+    type: x
+    category: topic
+    weight: 1.2
+    query: (LangGraph OR LangChain OR LlamaIndex OR "Pydantic AI" OR CrewAI OR "Semantic Kernel" OR AutoGen OR "OpenAI Agents SDK" OR "Vercel AI SDK" OR Mastra OR "agent framework" OR "agent SDK") -is:retweet lang:en
+    tags:
+      - agent
+      - framework
+      - eng
+      - tools
+    usage: both
+    tier: 1
+    max_results: 20
+  - id: topic-agent-tools-mcp
+    name: Agent tools / MCP / browser
+    type: x
+    category: topic
+    weight: 1.2
+    query: (MCP OR "Model Context Protocol" OR "tool calling" OR "function calling" OR Browserbase OR "Browser Use" OR Stagehand OR "computer use" OR playwright) (agent OR LLM OR Claude OR GPT) -is:retweet lang:en
+    tags:
+      - agent
+      - tools
+      - eng
+      - mcp
+    usage: both
+    tier: 1
+    max_results: 15
+  - id: topic-agent-best-practices
+    name: Agent engineering best practices
+    type: x
+    category: topic
+    weight: 1.2
+    query: ("agent best practices" OR "agent engineering" OR "context engineering" OR "agent evals" OR "agent harness" OR "agent memory" OR "multi-agent" OR "tool use" OR "agentic workflow") (production OR production- OR shipping OR guide OR patterns) -is:retweet lang:en
+    tags:
+      - agent
+      - eng
+      - eval
+      - tools
+    usage: both
+    tier: 1
+    max_results: 15
+  - id: topic-coding-agent-tools
+    name: Coding agent tools
+    type: x
+    category: topic
+    weight: 1.2
+    query: (Aider OR Continue.dev OR Continue OR Cursor OR "Claude Code" OR Codex OR OpenCode OR Windsurf OR "coding agent" OR "pair programming agent") (release OR workflow OR tip OR skill OR MCP) -is:retweet lang:en
+    tags:
+      - ai-coding
+      - agent
+      - tools
+      - eng
+    usage: daily
+    tier: 1
+    max_results: 15

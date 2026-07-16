@@ -182,6 +182,44 @@ sources:
     ]);
   });
 
+  test("loads topic queries and ranking metadata", async () => {
+    directory = await mkdtemp(join(tmpdir(), "signalcraft-sources-"));
+    const defaultPath = join(directory, "sources.default.yaml");
+    await writeFile(
+      defaultPath,
+      `version: 1
+sources:
+  - id: topic-coding-agents
+    name: Coding agents
+    type: x
+    category: topic
+    weight: 1.2
+    query: '("Claude Code" OR Codex) -is:retweet lang:en'
+    tags: [ai-coding, agent]
+    usage: both
+    tier: 1
+    max_results: 20
+`,
+    );
+
+    expect(
+      await loadMergedSources(defaultPath, join(directory, "missing.yaml")),
+    ).toEqual([
+      {
+        id: "topic-coding-agents",
+        name: "Coding agents",
+        type: "x",
+        category: "topic",
+        weight: 1.2,
+        query: '("Claude Code" OR Codex) -is:retweet lang:en',
+        tags: ["ai-coding", "agent"],
+        usage: "both",
+        tier: 1,
+        maxResults: 20,
+      },
+    ]);
+  });
+
   test("rejects invalid sources from a YAML overlay", async () => {
     directory = await mkdtemp(join(tmpdir(), "signalcraft-sources-"));
     const defaultPath = join(directory, "sources.default.yaml");
@@ -202,6 +240,33 @@ added:
 
     await expect(loadMergedSources(defaultPath, overlayPath)).rejects.toThrow(
       "Unsupported source type: unsupported",
+    );
+  });
+});
+
+describe("default source pack", () => {
+  test("loads the approved active sources and exact topic queries", async () => {
+    const defaultPath = new URL("../../sources.default.yaml", import.meta.url)
+      .pathname;
+    const sources = await loadMergedSources(
+      defaultPath,
+      join(tmpdir(), "signalcraft-no-default-overlay.yaml"),
+    );
+
+    expect(sources).toHaveLength(93);
+    expect(
+      sources.reduce<Record<string, number>>((counts, source) => {
+        counts[source.type] = (counts[source.type] ?? 0) + 1;
+        return counts;
+      }, {}),
+    ).toEqual({ rss: 31, github: 4, youtube: 3, x: 55 });
+    expect(sources.filter((source) => source.query)).toHaveLength(18);
+    expect(sources.some((source) => source.handle === "ClaudeDevs")).toBe(true);
+    expect(sources.some((source) => source.handle === "AnthropicAI")).toBe(
+      false,
+    );
+    expect(sources.some((source) => source.handle === "GoogleDeepMind")).toBe(
+      false,
     );
   });
 });

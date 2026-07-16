@@ -28,6 +28,10 @@ export const SOURCE_TYPES = ["rss", "github", "youtube", "x"] as const;
 
 export type SourceType = (typeof SOURCE_TYPES)[number];
 
+export const SOURCE_USAGES = ["daily", "longform", "both"] as const;
+
+export type SourceUsage = (typeof SOURCE_USAGES)[number];
+
 export interface SourceDefinition {
   id: string;
   name: string;
@@ -36,6 +40,11 @@ export interface SourceDefinition {
   weight: number;
   url?: string;
   handle?: string;
+  query?: string;
+  tags?: string[];
+  usage?: SourceUsage;
+  tier?: 1 | 2;
+  maxResults?: number;
 }
 
 export interface SourcePack {

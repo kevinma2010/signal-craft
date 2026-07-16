@@ -106,6 +106,9 @@ describe("fetchGitHubSources", () => {
     expect(result.items[1]?.extra).toEqual({
       author_association: "MEMBER",
       category: "Announcements",
+      source_id: "example-repo",
+      source_category: "release",
+      source_weight: 1,
     });
   });
 

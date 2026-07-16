@@ -2,6 +2,7 @@ import { XMLParser } from "fast-xml-parser";
 import { appendJsonLines, readJsonLines } from "./jsonl";
 import { htmlToMarkdown } from "./sanitize";
 import { hasSeen, loadSeenRecords } from "./seen";
+import { getSourceMetadata } from "./sources";
 import type { NormalizedItem, SourceDefinition } from "./types";
 import { createItemId, fingerprintUrl } from "./url";
 
@@ -167,7 +168,10 @@ function normalizeEntry(
     fetched_at: fetchedAt.toISOString(),
     text: htmlToMarkdown(content, url),
     transcript_provider: "none",
-    extra: enclosure ? { enclosure } : {},
+    extra: {
+      ...getSourceMetadata(source),
+      ...(enclosure ? { enclosure } : {}),
+    },
   };
 }
 

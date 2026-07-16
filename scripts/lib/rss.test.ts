@@ -56,6 +56,9 @@ describe("parseFeed", () => {
     const [item] = parseFeed(atom, { ...blog, category: "podcast" });
     expect(item?.type).toBe("podcast");
     expect(item?.extra).toEqual({
+      source_id: "example-blog",
+      source_category: "podcast",
+      source_weight: 1,
       enclosure: {
         url: "https://cdn.example.com/episode-1.mp3",
         type: "audio/mpeg",
