@@ -8,6 +8,7 @@ export * from "./github";
 export * from "./jsonl";
 export * from "./lock";
 export * from "./rss";
+export * from "./run-audit";
 export * from "./sanitize";
 export * from "./seen";
 export * from "./sources";

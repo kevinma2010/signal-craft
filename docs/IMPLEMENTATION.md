@@ -45,6 +45,8 @@ conversational prompts; never depend on host-specific tools for core flow.
 │   └── <category>.jsonl
 ├── items/             # permanent archive of all processed items
 │   └── YYYY-MM.jsonl
+├── runs/              # immutable audit summaries, one JSON file per run
+│   └── <run-id>.json
 ├── cache/
 │   ├── x-search-state.json # legacy Grok search high-water marks; migrates into state.json
 │   ├── x-api-usage.jsonl   # paid request reservations and reconciliations
@@ -85,6 +87,9 @@ and the Phase 3 searchable archive. Retention is per type:
 - Durable cache entries (X usage, transcripts, pre-summaries, translations) —
   permanent. Pending collection records are removed after recovery or commit.
 - `digests/` — permanent.
+- `runs/` — permanent structured audit summaries. These contain counts,
+  coverage, cost, degradation codes, and artifact paths, never content bodies,
+  prompts, process logs, stack traces, or credentials.
 
 ### Collection Ledger and Briefing Windows
 
@@ -137,6 +142,17 @@ one-line mention to a recommendation to disable the source; one user
 confirmation writes the disable into the `sources.yaml` overlay. Sources are
 never disabled automatically — transient outages must not silently shrink
 coverage.
+
+### Run Audit
+
+Every collection or briefing execution writes one immutable versioned record
+under `runs/`. It captures the event-time window, configured and covered source
+counts, source failure codes, archived and selected item counts, item types, X
+post body availability and completeness status, transcription and translation
+counts, paid X API reads and estimated cost, degradation codes, and artifact
+paths. The record is an operational audit summary, not a process log: it does
+not duplicate fetched content or retain commands, prompts, stdout/stderr, stack
+traces, environment variables, or secrets.
 
 ### Concurrency
 

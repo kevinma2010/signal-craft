@@ -23,6 +23,7 @@
 | X API budget | 默认关闭、usage 预检、四层预算、预留与结算、禁止分页、熔断、成功响应不重试 |
 | Translation | 缺 key、cache hit、API 成功/失败、并发 immutable cache |
 | Archive/JSONL | 月度归档幂等、seen 提交、非法 JSONL |
+| Run audit | 不可变写入、严格 schema、X 正文完整性统计、禁止程序日志字段与路径穿越 |
 
 ## E2E 用例
 

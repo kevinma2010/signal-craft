@@ -56,6 +56,8 @@
 - `scripts/lib/lock.ts`
 - `scripts/lib/rss.test.ts`
 - `scripts/lib/rss.ts`
+- `scripts/lib/run-audit.test.ts`
+- `scripts/lib/run-audit.ts`
 - `scripts/lib/sanitize.test.ts`
 - `scripts/lib/sanitize.ts`
 - `scripts/lib/seen.test.ts`
