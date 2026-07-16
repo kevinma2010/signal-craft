@@ -106,6 +106,15 @@ describe("translateMarkdown", () => {
     expect(await readFile(result.cachePath, "utf8")).toBe(translated);
     expect(request?.headers.get("Authorization")).toBe("Bearer test-secret");
     const body = await request?.json();
+    expect(body.messages[0].content).toContain(
+      "Rewrite it as a native speaker would naturally express the same meaning",
+    );
+    expect(body.messages[0].content).toContain(
+      "Keep technical terms, product names, model names, API names, library names, company names, and people's names in their original form",
+    );
+    expect(body.messages[0].content).toContain(
+      "Do not add, remove, summarize, or alter facts",
+    );
     expect(body.messages[1].content).toContain(options.markdown);
     expect(body.messages[1].content).toContain(options.targetLanguage);
     expect(JSON.stringify(body)).not.toContain(options.itemId);

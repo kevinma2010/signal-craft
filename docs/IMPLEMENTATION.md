@@ -236,13 +236,16 @@ the budget fall back to title, description, and show notes only.
 
 The digest narrative is always written in the user's language by the host
 agent (language rules live in PROMPTS.md). Separately, **full-text
-translation** powers the original/translated side-by-side reading in the
-planned local reading view. That is bulk mechanical work, so it is offloaded
-to the DeepSeek API — far cheaper than host-agent tokens:
+localization** powers the original/translated side-by-side reading in the
+planned local reading view. It preserves the source meaning while rewriting
+it in natural native phrasing, so it is offloaded to the DeepSeek API — far
+cheaper than host-agent tokens:
 
 - Scope: only items selected into a briefing are translated; ranked-out
   items cost nothing. Archived items without a translation are translated on
   demand when opened in the reading view.
+- Technical terms, product and model names, APIs, libraries, companies, and
+  people's names remain in their original form.
 - Translations are cached in `cache/translations/` keyed by item id and
   target language; they are immutable and produced at most once.
 - Without `DEEPSEEK_API_KEY`, full-text translation is skipped and the

@@ -98,7 +98,9 @@ Status: complete
 
 Status: complete
 
-- DeepSeek API, Markdown in/out, structure and media links preserved
+- DeepSeek API, native-style localized rewrite, meaning and facts preserved
+- Technical terms and proper names remain unchanged; Markdown structure and
+  media links are preserved
 - Scope: items selected into a briefing, plus on-demand for archived items
   opened in the reading view
 - Immutable cache in `cache/translations/` keyed by item id + target
