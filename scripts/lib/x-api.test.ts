@@ -144,9 +144,32 @@ describe("fetchXApiPosts", () => {
     expect(urls).toEqual(["https://api.x.com/2/usage/tweets"]);
   });
 
+  test("fails closed without charging when the preflight transport fails", async () => {
+    let calls = 0;
+    const result = await fetchXApiPosts(
+      options(async () => {
+        calls += 1;
+        throw new Error("proxy upstream timed out");
+      }),
+    );
+
+    expect(result.status).toBe("degraded");
+    expect(result.reason).toBe("preflight_failed");
+    expect(result.posts).toEqual([]);
+    expect(result.usage).toEqual({ postReads: 0, usd: 0 });
+    expect(result.audit).toEqual([
+      {
+        at: "2026-07-16T08:00:00.000Z",
+        event: "circuit_breaker",
+        detail: "usage preflight request failed",
+      },
+    ]);
+    expect(calls).toBe(1);
+  });
+
   test("circuits on malformed or over-cap usage", async () => {
     for (const response of [
-      Response.json({ data: { project_usage: "20", project_cap: 100 } }),
+      Response.json({ data: { project_usage: "20.5", project_cap: 100 } }),
       usage(101, 100),
     ]) {
       let calls = 0;
@@ -159,6 +182,25 @@ describe("fetchXApiPosts", () => {
       expect(result.reason).toBe("usage_anomaly");
       expect(calls).toBe(1);
     }
+  });
+
+  test("accepts integer strings returned by the usage endpoint", async () => {
+    const result = await fetchXApiPosts(
+      options(async (input) =>
+        String(input).includes("/usage/tweets")
+          ? Response.json({
+              data: { project_usage: "20", project_cap: "1000" },
+            })
+          : search(["101"], { newest_id: "101" }),
+      ),
+    );
+
+    expect(result.status).toBe("ok");
+    expect(result.posts.map((post) => post.id)).toEqual(["101"]);
+    expect(result.usage).toEqual({
+      postReads: 1,
+      usd: DEFAULT_X_API_COST_PER_POST_USD,
+    });
   });
 
   test("reserves worst-case reads and rejects every local budget guard", async () => {

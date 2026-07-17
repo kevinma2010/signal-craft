@@ -38,9 +38,11 @@ See [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Current Status
 
-SignalCraft is in the early open-source MVP stage.
+SignalCraft's technical MVP is complete. The project is now entering a
+Codex-first product validation stage focused on briefing quality, first-run
+success, and repeated weekly usage.
 
-The initial scope includes:
+The implemented foundation includes:
 
 - Curated AI builder updates
 - Official product and company updates
@@ -50,6 +52,14 @@ The initial scope includes:
 - Daily and weekly digests
 - Original source links
 - Local preferences
+- Incremental local archives and immutable run audits
+- A searchable local reader with bilingual cached content
+
+Codex in the ChatGPT desktop app is the primary supported runtime during the
+product beta. Recurring runs are delegated to Codex Scheduled tasks; SignalCraft
+does not currently ship its own background scheduler or email delivery. The core
+skill remains runtime-portable, but equal support for Claude Code and Grok Build
+is not a current release requirement.
 
 See [ROADMAP.md](ROADMAP.md).
 
@@ -58,20 +68,24 @@ See [ROADMAP.md](ROADMAP.md).
 SignalCraft is a single agent skill backed by Bun connector scripts. User data
 is stored outside the checkout in `~/.signalcraft/`.
 
-### Clone as a Claude Code skill
+### Clone as a Codex skill
 
-Clone the repository into the personal skills directory for automatic loading:
+Clone the repository into the Codex personal skills directory:
 
 ```bash
-git clone https://github.com/kevinma2010/signal-craft.git ~/.claude/skills/signalcraft
-cd ~/.claude/skills/signalcraft
+git clone https://github.com/kevinma2010/signal-craft.git ~/.agents/skills/signalcraft
+cd ~/.agents/skills/signalcraft
 bun install
+bun run doctor
 ```
 
-Restart Claude Code after installation. The checkout appears as a
-skills-directory plugin and does not require a marketplace.
+Codex detects personal skills from `~/.agents/skills`. Start with a manual
+briefing run and review its output before creating a recurring Scheduled task.
 
-### Load as a Claude Code plugin
+The computer must remain powered on and the ChatGPT desktop app must be running
+when a Scheduled task needs this local checkout and `~/.signalcraft/` data.
+
+### Optional Claude Code compatibility
 
 For a local checkout, install dependencies and load the plugin directly:
 
@@ -85,8 +99,8 @@ claude --plugin-dir "$PWD"
 The local plugin manifest lives at `.claude-plugin/plugin.json`. Run
 `/reload-plugins` after changing the skill or manifest. Marketplace installs use
 `claude plugin install signal-craft@<marketplace>` after a marketplace publishes
-this repository; `claude --plugin-dir` is the supported installation path for
-the current standalone repository.
+this repository. Claude Code compatibility is retained, but Codex is the
+product-beta release target.
 
 ## Runtime Setup
 
@@ -127,6 +141,42 @@ export X_BEARER_TOKEN="..."
   enabled in configuration.
 
 Missing optional credentials or binaries degrade only the affected connector.
+
+## Health Check
+
+Run the read-only doctor before the first briefing and after configuration or
+dependency changes:
+
+```bash
+bun run doctor
+```
+
+Use `bun run doctor -- --data <path>` for a non-default data directory. Doctor
+validates configuration, merged sources, state, locks, pending recovery records,
+required executables, capability credentials, Grok login, and the reader port.
+It never installs software, changes configuration, migrates state, removes
+locks, or prints credential values.
+
+Exit codes are stable for automation: `0` is ready, `1` is ready with degraded
+capabilities, and `2` is blocked.
+
+## Scheduled Briefings with Codex
+
+Use a Codex Scheduled task to invoke SignalCraft daily or weekly. Codex owns the
+schedule, run inbox, and completion visibility; SignalCraft owns collection,
+archive reuse, briefing generation, persistence, and the local reader.
+
+Test the request manually before scheduling it. The scheduled prompt must name
+the action explicitly so the skill runs the briefing instead of showing its
+session menu. For example:
+
+```text
+Generate today's standard SignalCraft digest and save it to the local digest archive.
+```
+
+Scheduled runs that need this checkout or `~/.signalcraft/` require the computer
+to remain powered on and the ChatGPT desktop app to be running. See the official
+[Codex Scheduled tasks documentation](https://learn.chatgpt.com/docs/automations.md).
 
 ## Configuration
 
@@ -176,6 +226,29 @@ bun scripts/fetch-rss.ts \
 Replace `fetch-rss.ts` and the output filename with `fetch-github.ts`,
 `fetch-youtube.ts`, or `fetch-x.ts` for the other connectors.
 
+## Local Reader
+
+Read generated briefings in a focused TanStack Start interface:
+
+```bash
+bun run reader
+```
+
+Open `http://127.0.0.1:4317`. The React reader displays Markdown files from
+`~/.signalcraft/digests/` and every normalized signal archived under
+`~/.signalcraft/items/`. The sidebar keeps the briefing archive compact, while
+the Signals entry opens a full main-surface catalog grouped by publication date
+with search and type filtering. Each signal reports whether its archived body
+is complete, excerpted, unknown, metadata-only, or otherwise archived. The
+reader also supports responsive
+navigation, reading progress, theme selection, adjustable type size, and
+bilingual reading for items with an existing localization cache. Localized and
+original content can be viewed together or separately. It is read-only:
+opening a briefing does not run connectors, fetch a covered interval again, or
+call a paid API; an item without a cached localization remains original-only.
+Use `--data <path>` or `--port <number>` after `--` to override the data
+directory or port.
+
 ## Testing
 
 Install dependencies, then run the quality gates from the repository root:
@@ -192,7 +265,7 @@ Tests use mocks and do not require real API credentials, a Grok login, or
 `yt-dlp`. Real provider checks are manual smoke tests and may consume paid API
 quota.
 
-## Planned Workflow
+## Workflow
 
 ```text
 Sources
@@ -210,7 +283,9 @@ Rank useful signals
         ↓
 Generate an evidence-backed briefing
         ↓
-Deliver to the user
+Save locally and report completion in Codex Scheduled
+        ↓
+Open in the local reader
 ```
 
 See [docs/DESIGN.md](docs/DESIGN.md).
@@ -248,6 +323,23 @@ signal-craft/
 ├── PROMPTS.md
 ├── EXAMPLES.md
 ├── sources.default.yaml
+├── vite.config.ts
+├── src/
+│   ├── router.tsx
+│   ├── routeTree.gen.ts
+│   ├── styles.css
+│   ├── reader/
+│   │   ├── api.server.ts
+│   │   ├── app-shell.tsx
+│   │   ├── format.ts
+│   │   └── server.ts
+│   └── routes/
+│       ├── __root.tsx
+│       ├── briefings.index.tsx
+│       ├── briefings.$digestId.tsx
+│       ├── signals.index.tsx
+│       ├── signals.$itemId.tsx
+│       └── api.*.ts
 ├── fixtures/
 │   ├── README.md
 │   ├── SCORING_RUBRIC.md
@@ -256,16 +348,19 @@ signal-craft/
 │   └── rss/
 │       └── atom.xml
 ├── scripts/
+│   ├── doctor.ts
 │   ├── fetch-rss.ts
 │   ├── fetch-github.ts
 │   ├── fetch-youtube.ts
 │   ├── fetch-x.ts
 │   ├── fetch-x.test.ts
+│   ├── serve-reader.ts
 │   └── lib/
 │       ├── archive.ts
 │       ├── cli.ts
 │       ├── collection.ts
 │       ├── config.ts
+│       ├── doctor.ts
 │       ├── executable.ts
 │       ├── file-lock.ts
 │       ├── index.ts
@@ -273,6 +368,7 @@ signal-craft/
 │       ├── github.ts
 │       ├── jsonl.ts
 │       ├── lock.ts
+│       ├── reader.ts
 │       ├── rss.ts
 │       ├── run-audit.ts
 │       ├── sanitize.ts
@@ -293,6 +389,7 @@ signal-craft/
 ├── tests/
 │   └── e2e/
 │       ├── pipeline.test.ts
+│       ├── reader.test.ts
 │       └── x-api-pipeline.test.ts
 └── docs/
     ├── DESIGN.md

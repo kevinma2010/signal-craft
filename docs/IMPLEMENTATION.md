@@ -1,6 +1,6 @@
-# SignalCraft MVP Implementation Design
+# SignalCraft Technical MVP Implementation
 
-This document describes the technical design of the Phase 1 open-source MVP.
+This document records the completed technical design of the Phase 1 open-source MVP.
 Product philosophy, source policy, and ranking are covered in [DESIGN.md](DESIGN.md).
 
 ## Overview
@@ -16,18 +16,21 @@ The MVP has two layers:
 
 Everything runs on the user's machine. There is no central service.
 
-## Runtime Portability
+## Runtime Strategy and Portability
 
-SignalCraft targets multiple agent runtimes, not only Claude Code. Claude
-Code, Codex CLI, and Grok Build all support the skill format natively, so a
-single `SKILL.md` serves every runtime — no per-runtime adapter files.
+Codex in the ChatGPT desktop app is the primary supported runtime for the
+product beta. A single runtime-neutral `SKILL.md` remains the architectural
+boundary so additional agent runtimes can be supported later without forking
+the core workflow.
 
 The rest of the core is equally runtime-neutral: connector scripts,
 `PROMPTS.md`, and the config and data layout under `~/.signalcraft/`.
 
-Instructions must degrade gracefully across runtimes: use the structured
+Instructions continue to degrade gracefully across runtimes: use the structured
 question UI where the host provides one, otherwise fall back to plain
-conversational prompts; never depend on host-specific tools for core flow.
+conversational prompts; never depend on host-specific tools for the core flow.
+Claude Code and Grok Build compatibility is best-effort during product
+validation, not a release gate.
 
 ## Runtime Layout
 
@@ -74,8 +77,8 @@ Connectors copy ranking metadata into each normalized item's `extra` object.
 
 ### Data Lifecycle
 
-All content data persists locally — it feeds the future local reading view
-and the Phase 3 searchable archive. Retention is per type:
+All content data persists locally — it feeds the local reading view and the
+Phase 3 searchable archive. Retention is per type:
 
 - `inbox/` — collection staging only. Successful connector output is appended
   to the `items/` archive and committed to collection state before report
@@ -93,8 +96,9 @@ and the Phase 3 searchable archive. Retention is per type:
 
 ### Collection Ledger and Briefing Windows
 
-Collection is independent from report generation. A scheduled or manual
-collection run appends newly discovered normalized items to the permanent
+Collection is independent from report generation. A host-triggered scheduled
+run (currently Codex Scheduled) or a manual collection run appends newly
+discovered normalized items to the permanent
 archive. Daily, weekly, and ad-hoc briefings then select an event-time window
 from `items/`; they do not invoke connectors themselves. In particular, a
 weekly briefing re-ranks and re-clusters the previous seven days of archived
@@ -211,7 +215,7 @@ defense is layered:
   every media reference in the body. Images (figures, screenshots) become
   Markdown image links; video, audio, and iframe embeds become plain links
   labeled with their media type (e.g. `[Video: <title>](url)`), so the
-  future reading view can restore them as players. When and how to load
+  local reading view can present them safely. When and how to load
   media is the renderer's decision. The `text` field never contains raw
   HTML, and archived Markdown is what the reading view renders — no
   re-fetching at display time.
@@ -298,8 +302,8 @@ the budget fall back to title, description, and show notes only.
 
 The digest narrative is always written in the user's language by the host
 agent (language rules live in PROMPTS.md). Separately, **full-text
-localization** powers the original/translated side-by-side reading in the
-planned local reading view. It preserves the source meaning while rewriting
+localization** powers original/translated side-by-side reading in the local
+reading view. It preserves the source meaning while rewriting
 it in natural native phrasing, so it is offloaded to the DeepSeek API — far
 cheaper than host-agent tokens:
 
@@ -432,7 +436,9 @@ failing the run.
 - Bun 1.x runs the TypeScript connector scripts directly; HTTP uses the
   built-in `fetch`
 - npm packages: `yaml` for config parsing, `fast-xml-parser` for RSS/Atom,
-  `linkedom` and `turndown` for safe HTML-to-Markdown conversion
+  `linkedom` and `turndown` for safe HTML-to-Markdown conversion, and
+  `marked` plus `sanitize-html` for the local digest reader; TanStack Start,
+  React 19, and Vite provide its typed routes, SSR, and preview server
 - `yt-dlp` as an external binary for YouTube metadata, subtitles, and audio
   extraction
 - Grok Build CLI as an external binary for X collection and topic discovery
@@ -464,17 +470,59 @@ When the user requests a briefing, the skill:
    failed, new item count, and transcription count.
 6. Records source health and new feedback, then clears committed staging data.
 
-Background scheduling is out of scope for the MVP; collection checks are
-user-triggered. When the skill is invoked without a specific request, it asks
-the user what to do (briefing now, catch up, manage sources or topics,
-feedback).
+SignalCraft does not ship a background scheduler. Manual invocations remain
+supported, while recurring product-beta runs are delegated to Codex Scheduled
+tasks. Scheduled provides the run inbox and completion visibility; the skill
+still owns collection, briefing generation, persistence, and its Run Report.
+Email and messaging delivery remain out of scope. When the skill is invoked
+without a specific request, it asks the user what to do (briefing now, catch up,
+manage sources or topics, feedback).
+
+## Local Reading View
+
+`bun run reader` starts a loopback-only TanStack Start development server at
+`127.0.0.1:4317`, using Bun as the runtime. It
+reads `digests/*.md` and all normalized records from `items/*.jsonl`, renders
+Markdown through an allowlist sanitizer, and serves a responsive archive and
+reading interface. The sidebar contains briefing navigation and a Signals
+entry; Signals opens a searchable, type-filtered main-surface catalog grouped
+by publication date instead of placing every item in the sidebar. Each signal
+exposes its source metadata, archived body size, and body status;
+empty bodies remain visible as metadata-only records rather than being hidden.
+Digest links matching a local archived item and signal-list entries open a
+bilingual view backed by the archived item and an existing
+`cache/translations/<item-id>.<language>.md` file. The view supports side-by-side,
+localized-only, and original-only modes. It never generates a missing
+translation or re-fetches a source when an item is opened.
+
+TanStack Start file routes provide the briefing, signal catalog, and item
+views. Server routes preserve the existing read-only `/api/digests` and
+`/api/items` contracts. The server has no connector, translation-request,
+transcription, or paid API path. Digest and item IDs are validated before
+filesystem access, and responses use a restrictive content security policy.
 
 ## Distribution
 
-- Primary: clone the repository into the host runtime's skills directory
-  (for Claude Code, `~/.claude/skills/signalcraft`; Codex CLI and Grok Build
-  use their own skills directories); update via `git pull`.
-- Claude Code plugin packaging (manifest in-repo) for marketplace install.
+- Primary product-beta path: clone into the Codex personal skills directory at
+  `~/.agents/skills/signalcraft`; update via `git pull`.
+- Codex Scheduled tasks provide recurring execution and completion visibility;
+  scheduling is a host capability rather than a connector responsibility.
+- Claude Code plugin packaging remains in-repo for best-effort compatibility.
+
+## Local Diagnostics
+
+`bun run doctor` performs a read-only preflight over the installed runtime and
+`~/.signalcraft/` data. It validates the Bun environment, project dependencies,
+preferences, merged source configuration, current state shape, run locks,
+pending collection recovery records, source-dependent executables and
+credentials, Grok login, and the default reader port.
+
+Doctor never installs software, writes configuration, migrates state, removes
+locks, completes pending transactions, or prints credential values. It returns
+`0` when ready, `1` when the core can run with degraded capabilities, and `2`
+when a core prerequisite blocks briefing generation. External probes are
+limited to non-generative status checks such as `grok models`; no paid content
+request is made.
 
 ## Engineering Conventions
 
@@ -499,6 +547,10 @@ eyes:
 
 ## Open Items
 
-- Default source pack: a curated starter list of high-quality,
-  primarily English-language sources.
-- Delivery beyond local file and terminal (email, messaging) — later phase.
+- Validate the curated default source pack and briefing quality with a small
+  design-partner cohort.
+- Publish and test a durable Codex Scheduled-task recipe after the manual flow
+  is stable.
+- Turn doctor findings into guided Codex-first onboarding and recovery flows.
+- Delivery beyond Codex Scheduled, local files, and the reader (email,
+  messaging) remains a later-phase option.

@@ -16,7 +16,9 @@ description: 本地优先的 AI 情报简报技能；用于抓取一手来源、
 3. 管理来源或关注主题
 4. 记录反馈
 
-宿主支持结构化问题界面时使用；否则以普通对话展示相同选项。自然语言与以下快捷意图等价：`digest [daily|weekly]`、`sources list|add|remove`、`topics follow|unfollow`、`feedback <note>`。
+宿主支持结构化问题界面时使用；否则以普通对话展示相同选项。自然语言与以下快捷意图等价：`digest [daily|weekly]`、`doctor`、`reader`、`sources list|add|remove`、`topics follow|unfollow`、`feedback <note>`。`doctor` 运行 `bun run doctor` 并解释阻塞项与降级项；它只读检查配置、状态、依赖、凭据是否存在和运行条件，不得修改数据或泄露凭据。`reader` 启动 `bun run reader` 并返回本地地址；阅读器可浏览已有简报和 `items/*.jsonl` 中的全部归档线索，标明正文归档状态，并读取现有翻译缓存以对照原文与本地化版本。阅读操作不触发采集或付费 API。
+
+若宿主的定时任务以明确动作调用本技能，例如 `digest daily` 或 `digest weekly`，直接执行对应简报，不展示上述入口菜单。定时、运行收件箱与完成通知由宿主负责；本技能不创建后台任务，也不发送邮件或消息。核心采集与简报流程不依赖宿主的定时能力，仍可手动触发。
 
 ## 首次设置
 

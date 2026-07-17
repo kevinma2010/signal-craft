@@ -1,6 +1,12 @@
 {
   "files": {
-    "includes": ["**", "!node_modules", "!.git"]
+    "includes": [
+      "**",
+      "!node_modules",
+      "!.git",
+      "!dist",
+      "!src/routeTree.gen.ts"
+    ]
   },
   "formatter": {
     "enabled": true,

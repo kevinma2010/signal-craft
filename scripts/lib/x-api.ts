@@ -465,8 +465,8 @@ async function fetchProjectUsage(
   }
   const data = record(body)?.data;
   const usage = record(data);
-  const projectUsage = number(usage?.project_usage);
-  const projectCap = number(usage?.project_cap);
+  const projectUsage = usageInteger(usage?.project_usage);
+  const projectCap = usageInteger(usage?.project_cap);
   if (
     projectUsage === undefined ||
     projectCap === undefined ||
@@ -783,6 +783,15 @@ function number(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value)
     ? value
     : undefined;
+}
+
+function usageInteger(value: unknown): number | undefined {
+  if (typeof value === "number") return number(value);
+  if (typeof value !== "string" || !/^(?:0|[1-9]\d*)$/.test(value)) {
+    return undefined;
+  }
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) ? parsed : undefined;
 }
 
 function numericString(value: unknown): value is string {

@@ -24,6 +24,8 @@
 | Translation | 缺 key、cache hit、API 成功/失败、并发 immutable cache |
 | Archive/JSONL | 月度归档幂等、seen 提交、非法 JSONL |
 | Run audit | 不可变写入、严格 schema、X 正文完整性统计、禁止程序日志字段与路径穿越 |
+| Doctor | healthy/degraded/blocked 退出码、配置与状态只读校验、条件化能力检查、凭据脱敏、锁与 recovery 不变性 |
+| Reader | Markdown allowlist、简报与主区分组线索目录、正文状态、排序、条目 URL 映射、双语缓存、路径穿越、CLI 参数 |
 
 ## E2E 用例
 
@@ -43,6 +45,8 @@
 第三条 E2E 使用同一批归档条目读取日报和周报窗口，断言窗口读取不调用任何 connector，并验证周报读取最近 7 天原始条目而非日报文本。
 
 第四条 E2E 启用 mock X API：运行前读取远端 usage，预算内只获取 checkpoint 后的新 Post；同一区间重跑采集与读取报告窗口均不产生额外 billable response，并验证跨来源共享每轮预算。
+
+Reader E2E 使用临时数据目录启动 TanStack Start loopback server，验证 SSR 页面、简报列表、主区线索目录结构、全量线索与正文状态、单篇安全 HTML、归档条目路由、双语缓存、缺失翻译降级、404、CSP nonce，以及空归档状态 API。
 
 ## 命令
 

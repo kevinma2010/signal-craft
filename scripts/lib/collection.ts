@@ -283,6 +283,10 @@ function validatePendingCollection(value: unknown): PendingCollection {
   return value as PendingCollection;
 }
 
+export function validatePendingCollectionSnapshot(value: unknown): void {
+  validatePendingCollection(value);
+}
+
 async function recordFailure(
   options: CollectAndCommitOptions,
   statePath: string,

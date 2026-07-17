@@ -109,7 +109,7 @@ export async function loadState(path: string): Promise<SignalCraftState> {
     currentVersion: STATE_VERSION,
     createDefault: createState,
     migrations,
-    validate: validateState,
+    validate: validateStateSnapshot,
   });
 }
 
@@ -117,7 +117,7 @@ export async function saveState(
   path: string,
   state: SignalCraftState,
 ): Promise<void> {
-  const validated = validateState(state);
+  const validated = validateStateSnapshot(state);
   await writeTextAtomic(path, `${JSON.stringify(validated, null, 2)}\n`);
 }
 
@@ -219,7 +219,7 @@ export function commitCollectionSuccess(
   return checkpoint;
 }
 
-function validateState(data: unknown): SignalCraftState {
+export function validateStateSnapshot(data: unknown): SignalCraftState {
   if (
     !isRecord(data) ||
     data.version !== STATE_VERSION ||

@@ -4,9 +4,9 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## What This Is
 
-SignalCraft is an open-source AI intelligence agent that fetches high-signal AI content (builder posts, official blogs, GitHub releases, YouTube, podcasts, X topics), deduplicates and ranks it, and generates evidence-backed daily/weekly briefings. The repository itself is an agent skill targeting multiple runtimes — Codex, Codex CLI, and Grok Build all load the same `SKILL.md` natively. Core instructions must never depend on host-specific tools.
+SignalCraft is an open-source AI intelligence agent that fetches high-signal AI content (builder posts, official blogs, GitHub releases, YouTube, podcasts, X topics), deduplicates and ranks it, and generates evidence-backed daily/weekly briefings. The repository itself is an agent skill with a host-neutral core. Codex in the ChatGPT desktop app is the primary product-beta runtime; other runtime compatibility is best-effort. Core instructions must never depend on host-specific tools.
 
-**Current state:** documentation and design only — no implementation code exists yet. The MVP technical design is settled and lives in `docs/IMPLEMENTATION.md`; implementation is the next step.
+**Current state:** the Phase 1 technical MVP is complete, including four connectors, incremental local archives, run audits, translation/transcription paths, deterministic tests, and a local reader. Current work is Codex-first product validation: onboarding, dependency health, a tested Scheduled-task recipe, and repeated usage with design partners. SignalCraft does not ship its own scheduler or email delivery.
 
 ## Architecture
 
@@ -25,7 +25,18 @@ Key implementation decisions already made:
 
 ## Commands
 
-No build, lint, or test tooling exists yet. Once scripts land, connectors run as:
+Quality gates:
+
+```
+bun run lint
+bun run typecheck
+bun run test:unit
+bun run test:e2e
+bun test
+bun run doctor
+```
+
+Connectors run as:
 
 ```
 bun scripts/fetch-<category>.ts --config ~/.signalcraft/sources.yaml --since <ISO8601> --out ~/.signalcraft/inbox/<category>.jsonl
@@ -37,7 +48,7 @@ Each document has a single owner-topic; content is deliberately not duplicated:
 
 - `docs/DESIGN.md` — product philosophy, source policy, ranking model
 - `docs/IMPLEMENTATION.md` — MVP technical design (scripts, schema, credentials)
-- `docs/TASKS.md` — sequenced MVP task plan with dependencies; update task status there as work lands
+- `docs/TASKS.md` — completed Phase 1 implementation record; current product work lives in `ROADMAP.md`
 - `SKILL.md` — the skill's runtime responsibilities and output format
 - `PROMPTS.md` — prompt templates for digest/social/podcast/official-update summarization
 - `PROJECT_POLICY.md` — governance, community conduct, privacy, acknowledgements, trademark; `CODE_OF_CONDUCT.md` is only a thin pointer to it

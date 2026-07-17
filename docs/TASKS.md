@@ -1,8 +1,9 @@
-# MVP Task Plan
+# Completed MVP Task Plan
 
-Execution plan for the Phase 1 MVP. Every design decision referenced here is
+Execution plan and status record for the Phase 1 MVP. Every design decision referenced here is
 recorded in [IMPLEMENTATION.md](IMPLEMENTATION.md); this document only
-sequences the work. Update the status column as tasks land.
+sequences the completed work. Tasks #1–#12 are complete; current product
+validation work is tracked in [ROADMAP.md](../ROADMAP.md).
 
 ## Dependency Graph
 
@@ -20,6 +21,7 @@ sequences the work. Update the status column as tasks land.
 
 #1–#9 all done ─▶ #10 unified incremental ingestion + optional X API
                          └─▶ #11 end-to-end verification + packaging
+                                  └─▶ #12 local web reader
 ```
 
 Task #2 is the critical path: once the first connector proves the full
@@ -122,8 +124,9 @@ Status: complete
   novelty replay, feedback injection, Run Report, archiving), data-delimiter
   usage for injection defense, the three depth levels, lock and degradation
   notices
-- Must stay portable across all three runtimes — no host-specific tools in
-  the core flow
+- The core flow remains host-neutral with no host-specific tools. Codex is the
+  primary supported runtime during product validation; portability is no longer
+  a release gate
 
 ### 9. Fixtures corpus and scoring rubric
 
@@ -171,3 +174,39 @@ Status: complete
   binary checks, deterministic unit and E2E suite
 - Completed: bounded real briefing with archive reuse, native-first transcript
   decisions, DeepSeek localization cache, ranking, clustering, and Run Report
+- Multi-runtime verification was an MVP packaging check; ongoing product-beta
+  release gating is Codex-first
+
+### 12. Local web reader
+
+Status: complete
+
+- Loopback-only TanStack Start server, running with Bun and Vite, reads
+  permanent Markdown briefings without running connectors or paid APIs
+- React 19 file routes replace the static hash SPA; typed server routes retain
+  the read-only digest and item API contracts
+- Safe Markdown rendering, archive search, responsive navigation, reading
+  progress, theme controls, and adjustable typography
+- Archived-item routing with cached bilingual, localized-only, and
+  original-only reading modes; no read-triggered paid translation
+- Searchable, type-filtered Signals catalog covers every normalized archived
+  item in a date-grouped main view and exposes source, type, body length, and
+  body-completeness status without crowding the briefing sidebar
+- Unit, TanStack SSR/API E2E, desktop, and mobile rendering verification
+
+## Product Beta Status
+
+The Phase 1 technical foundation is complete. Product validation now targets
+Codex in the ChatGPT desktop app as the primary runtime.
+
+- Recurring daily and weekly runs use Codex Scheduled tasks; SignalCraft does
+  not implement a separate background scheduler.
+- Completion visibility and notifications come from Codex Scheduled; email and
+  messaging delivery are deferred.
+- Claude Code and Grok Build remain architectural compatibility targets, not
+  product-beta release gates.
+- Completed: read-only `bun run doctor` with stable ready/degraded/blocked exit
+  codes, configuration and state validation, conditional capability checks,
+  credential redaction, lock/recovery inspection, and deterministic tests.
+- Next validation work: Codex-first onboarding around doctor findings, a tested
+  Scheduled-task recipe, and repeated usage with a small design-partner cohort.
